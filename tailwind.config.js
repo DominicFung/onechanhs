@@ -8,7 +8,15 @@ module.exports = {
     extend: {
       fontFamily: {
         'sans': ['Paradiso']
-      }
+      },
+      height: theme => ({
+        "screen/2": "50vh",
+        "screen/3": "calc(100vh / 3)",
+        "screen2/3": "calc(200vh / 3)",
+        "screen3/4": "calc(300vh / 4)",
+        "screen/4": "calc(100vh / 4)",
+        "screen/5": "calc(100vh / 5)",
+      }),
     },
     screens: {
       sm: '640px',
@@ -35,6 +43,7 @@ module.exports = {
       lightsage: {
         light: "#afc4c0",
         DEFAULT: "#afc4c0",
+        dark: "#8fa19d"
 
       },
       darkgreen: {

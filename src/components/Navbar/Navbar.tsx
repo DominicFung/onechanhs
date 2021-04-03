@@ -1,0 +1,60 @@
+
+import React, { useEffect } from 'react'
+import logo2 from '../../assets/Logo2.png'
+
+
+const _eqNavSides = 310
+export default function Nav () {
+  const [ isTop, setIsTop ] = React.useState(true)
+
+  useEffect(() => {
+    customSetScroll()
+    window.addEventListener('scroll', customSetScroll, true)
+    return window.removeEventListener('scroll', customSetScroll)
+  }, [])
+
+  const _ISTOPLIMIT = 10
+  const customSetScroll = () => {
+    //console.log(window.scrollY)
+    if (isTop && window.scrollY > _ISTOPLIMIT) setIsTop(false)
+    else setIsTop(true)
+  }
+
+  return (
+    <nav className="w-full flex items-center justify-between flex-wrap bg-lightsage p-6 fixed" style={{
+      //height: isTop ? 155 : 100,
+      backgroundColor: isTop ? "": "transparent",
+      transition: "background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s"
+    }}>
+        <div className="w-full flex lg:hidden">
+          <img src={logo2} alt="Logo" width={"150px"}/>
+          <div className="flex flex-grow" />
+          <button className="flex items-center px-3 py-2 border rounded text-darkgreen border-darkgreen hover:text-white hover:border-white">
+            <svg className="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
+          </button>
+        </div>
+        <div className="w-full hidden lg:flex flex-grow lg:items-center lg:w-auto lg:visible">
+          <div className={`text-sm`} style={{width: _eqNavSides}}>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white mr-4" style={{fontFamily: "Paradiso"}}>Home</a>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white mr-4">Products</a>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white">Inspo</a>
+          </div>
+          <div className="flex flex-grow" />
+          <div className="flex items-center flex-shrink-0 text-white mr-6 p-4">
+            {/*<img src={logo} alt="Logo" width={"150px"}/>*/}
+            <img src={logo2} alt="Logo" width={isTop? 200 : 150}  style={{transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s, width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s"}}/>
+            {/*<span className="font-semibold text-xl tracking-tight">One Chanhs Co.</span>*/}
+          </div>
+          <div className="flex flex-grow" />
+          <div className={`text-sm flex flex-row items-center justify-between`} style={{width: _eqNavSides-40}}>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white mr-4">Order</a>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white mr-4">F.A.Q.</a>
+            <a href="#responsive-header" className="block mt-4 lg:inline-block lg:mt-0 text-black hover:text-white mr-4">About</a>
+            <div>
+              <a href="#" className="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white hover:border-transparent hover:text-lightsage hover:bg-white mt-4 lg:mt-0">Cart</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+  )
+}

@@ -9,4 +9,33 @@
   src: url(./fonts/Paradiso.ttf);
 }
 
+.fadeIn {
+  visibility: visible;
+  height: auto;
+  opacity: 1;
+  transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms";
+}
+
+.fadeOut {
+  visibility: hidden;
+  height: 0;
+  opacity: 0;
+  transition: "opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms";
+}
+
+body::-webkit-scrollbar {
+  width: 12px;               /* width of the entire scrollbar */
+}
+
+body::-webkit-scrollbar-track {
+  background: whitesmoke;        /* color of the tracking area */
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: #afc4c0;    /* color of the scroll thumb */
+  border-radius: 20px;       /* roundness of the scroll thumb */
+  border: 2px solid whitesmoke;  /* creates padding around scroll thumb */
+}
+
+
 @tailwind utilities;
