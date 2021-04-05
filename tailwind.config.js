@@ -7,15 +7,19 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['Paradiso']
+        'sans': ['Paradiso'],
+        'serif': ['Farmhouse']
       },
       height: theme => ({
         "screen/2": "50vh",
         "screen/3": "calc(100vh / 3)",
         "screen2/3": "calc(200vh / 3)",
-        "screen3/4": "calc(300vh / 4)",
+        
         "screen/4": "calc(100vh / 4)",
+        "screen3/4": "calc(300vh / 4)",
+
         "screen/5": "calc(100vh / 5)",
+        "screen4/5": "calc(400vh / 5)"
       }),
     },
     screens: {

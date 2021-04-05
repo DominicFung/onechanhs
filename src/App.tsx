@@ -6,6 +6,7 @@ import React from 'react'
 //import './fonts/Paradiso.ttf'
 import Navbar from './components/Navbar/Navbar' 
 import Home from './components/Home/Home'
+import Footer from './components/Footer/Footer'
 
 // https://www.smashingmagazine.com/2020/02/tailwindcss-react-project/
 // https://tailwindcss.com/docs/configuration
@@ -14,14 +15,13 @@ import Home from './components/Home/Home'
 export default function App() {
   const [page, setPage] = React.useState('Home')
 
-  
-
   return (
     <div className="">
-      <Navbar />
+      <Navbar page={page}/>
       <div className={page === "Home"? "fadeIn": "fadeOut"}>
         <Home />
       </div>
+      <Footer />
     </div>
-  );
+  )
 }

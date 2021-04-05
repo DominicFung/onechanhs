@@ -5,8 +5,22 @@
 @font-face {
   font-family: 'Paradiso';
   font-style: normal;
-  font-weight: normal;
+  font-weight: 400;
   src: url(./fonts/Paradiso.ttf);
+}
+
+@font-face {
+  font-family: 'Paradiso';
+  font-style: normal;
+  font-weight: 700;
+  src: url(./fonts/ParadisoBold.ttf);
+}
+
+@font-face {
+  font-family: 'Farmhouse';
+  font-style: normal;
+  font-weight: 400;
+  src: url(./fonts/Farmhouse.otf);
 }
 
 .fadeIn {
@@ -36,6 +50,5 @@ body::-webkit-scrollbar-thumb {
   border-radius: 20px;       /* roundness of the scroll thumb */
   border: 2px solid whitesmoke;  /* creates padding around scroll thumb */
 }
-
 
 @tailwind utilities;
