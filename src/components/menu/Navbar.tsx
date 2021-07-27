@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 import whiteLogo from '../../assets/Logo2.png'
 import greenLogo from '../../assets/LogoDarkWords.png'
@@ -46,11 +47,14 @@ export default function Nav ({ page }: NavProps) {
         </div>
         <div className="w-full hidden lg:flex flex-grow lg:items-center lg:w-auto lg:visible">
           <div className={`text-sm`} style={{width: _eqNavSides}}>
-            <a href="#responsive-header" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${
+            <Link to="/" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${
               isTop?"hover:text-white":"hover:text-darkgreen"} mr-4 ${page==="Home"?"font-bold":""}`}>
                 Home
-            </a>
-            <a href="#responsive-header" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${isTop?"hover:text-white":"hover:text-darkgreen"} mr-4`}>Products</a>
+            </Link>
+            <Link to="/products" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${
+              isTop?"hover:text-white":"hover:text-darkgreen"} mr-4 ${page==="Products"?"font-bold":""}`}>
+              Products
+            </Link>
             <a href="#responsive-header" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${isTop?"hover:text-white":"hover:text-darkgreen"}`}>Inspo</a>
           </div>
           <div className="flex flex-grow" />
