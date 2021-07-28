@@ -1,0 +1,11 @@
+{
+  "AppSyncApiName": "onechanhs",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false,
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authonechanhs52083e38",
+      "Outputs.UserPoolId"
+    ]
+  }
+}

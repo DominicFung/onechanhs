@@ -1,0 +1,38 @@
+type StoreItem @model @auth(rules: [
+  {allow: public, provider: apiKey, operations: [read]},
+  {allow: private, provider: userPools, operations: [create, update, delete, read]},
+  {allow: private, provider: iam, operations: [create, update, delete, read] }
+]){
+  id: ID!
+  linkId: String! # make sure this is unique
+  productName: String!
+  pictures: [String]!
+
+  price: Float!
+  currency: String!
+  discountPrice: Float
+
+  hashtags: [String]!
+  shortDescription: String
+  description: String
+
+  customizeTextInstructions: String
+
+  sizes: [String]!
+  colors: [String]! #hex
+  orientations: [String]!
+
+  isPublished: Boolean
+}
+
+type Reciept @model @auth(rules: [
+
+]){
+  
+}
+
+type RecieptItem @model @auth(rules: [
+
+]){
+
+}

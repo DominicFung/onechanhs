@@ -1,10 +1,9 @@
 import "tailwindcss/tailwind.css"
 import './index.css'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { 
-  BrowserRouter as Router, 
-  Switch, Route
+  Switch, Route, useLocation
 } from "react-router-dom"
 
 import Navbar from './components/menu/Navbar' 
@@ -19,10 +18,21 @@ import Item from './pages/item/Item'
 
 // https://tailwindcss.com/docs/guides/create-react-app
 export default function App() {
+  let location = useLocation()
   const [page, setPage] = React.useState('Home')
 
+  useEffect(() => {
+    if (location) {
+      console.log(location)
+      let url = location.pathname
+      switch(url) {
+        case '/': setPage('Home'); break;
+        case '/products': setPage('Products'); break;
+      }
+    }
+  }, [location])
+
   return (
-    <Router>
       <div className="">
         <Navbar page={page}/>
         
@@ -40,6 +50,5 @@ export default function App() {
 
         <Footer />
       </div>
-    </Router>
   )
 }
