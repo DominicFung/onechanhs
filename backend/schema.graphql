@@ -1,0 +1,101 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  getStoreItemById(itemId: ID!): StoreItem!
+  listItems(limit: Int!, nextToken: String): StorePage!
+}
+
+type Mutation {
+  createItem(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
+  createOder(newOrder: OrderInput): Boolean!
+}
+
+type StorePage {
+  storeItems: [StoreItem]
+  nextToken: String
+}
+
+input ItemInput {
+  title: String!
+  description: String
+  pictures: [AWSURL]!
+  price: Float!
+}
+
+input OrderInput {
+  items: [OrderItemInput]
+
+  address: String!
+  postalCode: String!
+  city: String!
+  state: String
+  country: String!
+}
+
+input OrderItemInput {
+  itemId: ID!
+  
+  text: String
+  size: String
+  color: String
+  orientation: String
+
+  additionalInstructions: String
+}
+
+# -- BASE TYPES --
+
+type StoreItem @aws_iam {
+  storeItemId: ID!
+  title: String!
+  pictures: [String]!
+  description: String
+
+  price: Float!
+  currency: String!
+  discountPrice: Float
+  
+  hashtags: [String]!
+  shortDescription: String
+  
+  customizeTextInstructions: String
+  
+  sizes: [String]!
+  colors: [String]! #hex
+  orientations: [String]!
+  
+  isPublished: Boolean
+}
+
+type Order {
+  orderId: ID!
+  address: String!
+  postalCode: String!
+  city: String!
+  state: String
+  country: String!
+
+  discount: Float
+  discountCodeUsed: String
+
+  isFulfilled: Boolean
+  fulfilledDate: AWSDateTime
+  
+  dateOrdered: AWSDateTime
+}
+
+type OrderItem {
+  orderItemId: ID!
+
+  purchasePrice: Float!
+
+  text: String
+  size: String
+  color: String
+  orientation: String
+
+  additionalInstructions: String
+}

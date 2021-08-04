@@ -73,9 +73,9 @@ export default function Nav ({ page }: NavProps) {
               {/*<a href="#" className="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white hover:border-transparent hover:text-lightsage hover:bg-white mt-4 lg:mt-0">
                 Cart
               </a>*/}
-              <button className="inline-block text-sm px-4 py-2 text-darkgreen hover:text-black"
-                style={{transition: "color 0.8s cubic-bezier(0.4, 0, 0.2, 1)"}}
-              ><ShoppingCartIcon /></button>
+              <Link className={`inline-block text-sm px-4 py-2 hover:text-black ${page==="Cart"?"font-bold text-black":"text-darkgreen" }`}
+                style={{transition: "color 0.8s cubic-bezier(0.4, 0, 0.2, 1)"}} to="/cart"
+              ><ShoppingCartIcon /></Link>
             </div>
           </div>
         </div>

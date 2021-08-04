@@ -12,6 +12,7 @@ import Footer from './components/menu/Footer'
 import Home from './pages/home/Home'
 import Products from './pages/products/Products'
 import Item from './pages/item/Item'
+import Cart from './pages/cart/Cart'
 
 // https://www.smashingmagazine.com/2020/02/tailwindcss-react-project/
 // https://tailwindcss.com/docs/configuration
@@ -28,6 +29,7 @@ export default function App() {
       switch(url) {
         case '/': setPage('Home'); break;
         case '/products': setPage('Products'); break;
+        case '/cart': setPage('Cart'); break;
       }
     }
   }, [location])
@@ -39,6 +41,9 @@ export default function App() {
         <Switch>
           <Route path="/products/:id">
             <Item />
+          </Route>
+          <Route path="/cart">
+            <Cart />
           </Route>
           <Route path="/products">
             <Products />

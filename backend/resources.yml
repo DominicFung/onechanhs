@@ -1,0 +1,201 @@
+
+storeItem:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: storeItem
+    AttributeDefinitions:
+      - AttributeName: itemId
+        AttributeType: S
+      - AttributeName: title
+        AttributeType: S
+    KeySchema:
+      - AttributeName: itemId
+        KeyType: HASH
+      - AttributeName: title
+        KeyType: RANGE
+    BillingMode: PAY_PER_REQUEST
+    Tags:
+      - Key: name
+        Value: store-items-table
+
+orderItem:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: orderItem
+    AttributeDefinitions:
+      - AttributeName: orderItemId
+        AttributeType: S
+      - AttributeName: orderId
+        AttributeType: S
+    KeySchema:
+      - AttributeName: orderItemId
+        KeyType: HASH
+      - AttributeName: orderId
+        KeyType: RANGE
+    BillingMode: PAY_PER_REQUEST
+    Tags:
+      - Key: name
+        Value: order-items-table
+
+order:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: order
+    AttributeDefinitions:
+      - AttributeName: orderId
+        AttributeType: S
+      - AttributeName: dateOrdered
+        AttributeType: S
+    KeySchema:
+      - AttributeName: orderId
+        KeyType: HASH
+      - AttributeName: dateOrdered
+        KeyType: RANGE
+    BillingMode: PAY_PER_REQUEST
+    Tags:
+      - Key: name
+        Value: order-table
+
+cognitoUserPool:
+  Type: AWS::Cognito::UserPool
+  Properties:
+    UsernameAttributes:
+      - email
+    UserPoolName: "OneChanhsUsers"
+
+cognitoUserPoolClient:
+  Type: AWS::Cognito::UserPoolClient
+  Properties:
+    ClientName: Web
+    UserPoolId: !Ref cognitoUserPool
+
+cognitoAdminGroup:
+  Type: AWS::Cognito::UserPoolGroup
+  Properties:
+    Description: "Admin users belong to this group"
+    GroupName: "Admin"
+    Precedence: 0
+    RoleArn: !GetAtt cognitoAdminCognitoRole.Arn
+    UserPoolId: !Ref cognitoUserPool
+
+cognitoAdminCognitoRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Description: "IAM role for OneChanh admins"
+    Policies:
+      - PolicyName: "onechanhs-admin-group-policy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+              Resource:
+                - !GetAtt storeItem.Arn
+                - !GetAtt orderItem.Arn
+                - !GetAtt order.Arn
+    RoleName: "onechanhs-admin-role"
+
+
+
+cognitoCustomerGroup:
+  Type: AWS::Cognito::UserPoolGroup
+  Properties:
+    Description: "Customer users belong to this group"
+    GroupName: "Customer"
+    Precedence: 1
+    RoleArn: !GetAtt cognitoAdminCognitoRole.Arn
+    UserPoolId: !Ref cognitoUserPool
+
+cognitoCustomerCognitoRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Description: "IAM role for OneChanh customers"
+    Policies:
+      - PolicyName: "onechanhs-customer-group-policy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+              Resource:
+                - !GetAtt orderItem.Arn
+                - !GetAtt order.Arn
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:Query"
+                - "dynamodb:BatchGetItem"
+              Resource:
+                - !GetAtt storeItem.Arn
+    RoleName: "onechanhs-customer-role"
+
+
+# cognitoUnauthIAMRole:
+#   Type: AWS::IAM::Role
+#   Properties:
+#     AssumeRolePolicyDocument:
+#       Version: "2012-10-17"
+#       Statement:
+#         - Effect: Allow
+#           Principal:
+#             Federated:
+#               - "cognito-identity.amazonaws.com"
+#           Action:
+#             - "sts:AssumeRoleWithWebIdentity"
+#     Description: "IAM role for OneChanh customers"
+#     Policies:
+#       - PolicyName: "onechanhs-unauth-role"
+#         PolicyDocument:
+#           Version: "2012-10-17"
+#           Statement:
+#             - Effect: Allow
+#               Action:
+#                 - "appsync:GraphQL"
+#               Resource:
+#                 - !GetAtt orderItem.Arn
+#                 - !GetAtt order.Arn
+#             - Effect: Allow
+#               Action:
+#                 - "dynamodb:GetItem"
+#                 - "dynamodb:Query"
+#                 - "dynamodb:BatchGetItem"
+#               Resource:
+#                 - !GetAtt storeItem.Arn
+#     RoleName: "onechanhs-unauth-role"
+    
+
+# cognitoIdentityPool:
+#   Type: AWS::Cognito::IdentityPool
+#   Properties:
+#     AllowUnauthenticatedIdentities: true
+#     CognitoIdentityProviders:
+#       - ClientId: !Ref cognitoUserPoolClient
+#         ProviderName: !GetAtt cognitoUserPool.ProviderName
+#     IdentityPoolName: OneChanhsIdentityPool
+
+# cognitoIdentityPoolRoleAttachment:
+#   Type: AWS::Cognito::IdentityPoolRoleAttachment
+#   Properties:
+#     IdentityPoolId: !Ref cognitoIdentityPool
+#     Roles:
+#       unauthenticated: !GetAtt cognitoUnauthIAMRole.Arn
