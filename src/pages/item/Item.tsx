@@ -1,9 +1,16 @@
 
 import React from 'react'
 import { useEffect } from 'react'
-import { useHistory, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import ItemTab from './ItemTab'
+
+import { API } from 'aws-amplify'
+import { StoreItem } from '../../API'
+
+//import { getStoreItemById } from '../../graphql/queries'
+import { getStoreItemWithPic } from '../../graphql/queries'
+import { GraphQLResult } from '@aws-amplify/api-graphql'
 
 const _SIDE_PANNEL_ID = "item_side_pannel"
 
@@ -11,9 +18,10 @@ interface StoreItemProps {
   
 }
 
-export default function StoreItem(props: StoreItemProps){
+export default function Item(props: StoreItemProps){
 
   const { id } = useParams() as any
+  const [ storeItem, setStoreItem ] = React.useState<StoreItem|null>(null)
 
   const [sidePannelHeight, setSidePannelHeight] = React.useState(0)
   const sidePannelRef = React.useRef(null)
@@ -28,14 +36,29 @@ export default function StoreItem(props: StoreItemProps){
   const [ customTexts, setCustomTexts ] = React.useState<string[]>([""])
   const [ customInstructions, setCustomInstructions ] = React.useState<string[]>([""])
 
-  const _temp = {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random'],
-    colors: ['#3a4c17', '#b45d67', '#01aede', '#62d5c4'],
-    description: "This is a fake description of the wedding cup. Its cool, buy it."
+  const getStoreItem = async (id: String) => { 
+    let si = await API.graphql({
+      query: getStoreItemWithPic,
+      variables: { itemId: id },
+      authMode: 'AWS_IAM' as any
+    }) as GraphQLResult<{ getStoreItemById?: StoreItem }>
+
+    console.log(si.data?.getStoreItemById)
+    setStoreItem(si.data?.getStoreItemById || null)
   }
+
+  // const _temp = {
+  //   id: "testtesttest",
+  //   title: "Custom Wedding Mug",
+  //   price: 45,
+  //   pictures: ['https://source.unsplash.com/random'],
+  //   colors: ['#3a4c17', '#b45d67', '#01aede', '#62d5c4'],
+  //   description: "This is a fake description of the wedding cup. Its cool, buy it."
+  // }
+
+  useEffect(() => {
+    getStoreItem(id)
+  }, [id])
 
   const handleResize = () => {
     if (sidePannelRef.current) {
@@ -105,22 +128,29 @@ export default function StoreItem(props: StoreItemProps){
             <div className="grid grid-cols-6 gap-2 h-full">
               <div className="w-full col-span-1">
                 <div className="w-full grid grid-flow-row gap-1 justify-end">
-                  <div style={{backgroundImage: `url(${_temp.images[0] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
+                  { storeItem?.pictures.map((v, i) => {
+                      return (
+                        <div key={i} style={{backgroundImage: `url(${storeItem?.pictures[i]})`, backgroundColor: "#afc4c0"}}
+                          className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
+                        />
+                      )
+                  })}
+                  {/* <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
                     className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                   />
-                  <div style={{backgroundImage: `url(${_temp.images[0] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
+                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
                     className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                   />
-                  <div style={{backgroundImage: `url(${_temp.images[0] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
+                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
                     className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                   />
-                  <div style={{backgroundImage: `url(${_temp.images[0] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
+                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
                     className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
-                  />
+                  /> */}
                 </div>
               </div>
               <div className="w-full col-span-5 h-full">
-                <div style={{backgroundImage: `url(${_temp.images[0] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
+                <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] })`, backgroundColor: "#afc4c0"}}
                   className="w-full h-full bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                 />
               </div>
@@ -133,10 +163,10 @@ export default function StoreItem(props: StoreItemProps){
                 <span className="inline-flex items-center justify-center px-2 py-1 mr-2 text-xs font-bold leading-none text-gray-100 bg-gray-300 rounded-full">#cool</span>
                 <span className="inline-flex items-center justify-center px-2 py-1 mr-2 text-xs font-bold leading-none text-gray-100 bg-gray-300 rounded-full">#fancy</span>
               </div>
-              <h2 className="text-4xl">{_temp.title}</h2>
+              <h2 className="text-4xl">{storeItem?.title}</h2>
               <small className="italic text-xs" style={{fontSize: 10}}>Product id: {id}</small>
 
-              <p className="m-2 p-4 bg-gray-50 rounded">{_temp.description}</p>
+              <p className="m-2 p-4 bg-gray-50 rounded">{storeItem?.description}</p>
               
               <div className="flex flex-row">
                   <label htmlFor="custom-input-number" className="w-full text-gray-700 text-sm font-semibold pt-3.5">Quantity:</label>
@@ -187,10 +217,10 @@ export default function StoreItem(props: StoreItemProps){
                   </label>
                   <div className="mb-4 pb-4">
                     {
-                      _temp.colors.map((v, i) => {
+                      storeItem?.colors.map((v, i) => {
                         return (
                           <span className="rounded-full h-8 w-8 mr-1 inline-flex items-center justify-center border-2 border-white hover:border-gray-200"
-                            style={{backgroundColor: v, borderColor: colorChoices[tab]===i?v:""}}  
+                            style={{backgroundColor: v||"", borderColor: colorChoices[tab]===i?v||"":""}}  
                             onClick={() => { 
                               colorChoices[tab] = i
                               setColorChoices([...colorChoices]) 

@@ -13,11 +13,14 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "aws-amplify-serverless-plugin": "^1.4.1",
+    "serverless": "^2.53.1",
     "serverless-appsync-plugin": "^1.11.3",
     "serverless-appsync-simulator": "^0.17.0",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.0.0",
     "serverless-plugin-common-excludes": "^4.0.0",
-    "serverless-plugin-include-dependencies": "^5.0.0"
+    "serverless-plugin-include-dependencies": "^5.0.0",
+    "uuid": "^3.3.2"
   }
 }

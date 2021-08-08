@@ -1,18 +1,35 @@
+s3SharedBucketArtifacts:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: '${self:custom.imagesBucketName}'
+    AccelerateConfiguration:
+      AccelerationStatus: Enabled
+    LifecycleConfiguration:
+      Rules:
+        - Id: expire temp objects
+          ExpirationInDays: 7
+          Prefix: public
+          Status: Enabled
 
 storeItem:
   Type: AWS::DynamoDB::Table
   Properties:
-    TableName: storeItem
+    TableName: '${self:custom.storeItemTableName}'
     AttributeDefinitions:
       - AttributeName: itemId
         AttributeType: S
-      - AttributeName: title
+      - AttributeName: linkId
         AttributeType: S
     KeySchema:
       - AttributeName: itemId
         KeyType: HASH
-      - AttributeName: title
-        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: byLink
+        KeySchema:
+          - AttributeName: linkId
+            KeyType: HASH
+        Projection:
+          ProjectionType: 'ALL'
     BillingMode: PAY_PER_REQUEST
     Tags:
       - Key: name
@@ -21,17 +38,13 @@ storeItem:
 orderItem:
   Type: AWS::DynamoDB::Table
   Properties:
-    TableName: orderItem
+    TableName: '${self:custom.orderItemTableName}'
     AttributeDefinitions:
       - AttributeName: orderItemId
-        AttributeType: S
-      - AttributeName: orderId
         AttributeType: S
     KeySchema:
       - AttributeName: orderItemId
         KeyType: HASH
-      - AttributeName: orderId
-        KeyType: RANGE
     BillingMode: PAY_PER_REQUEST
     Tags:
       - Key: name
@@ -40,21 +53,55 @@ orderItem:
 order:
   Type: AWS::DynamoDB::Table
   Properties:
-    TableName: order
+    TableName: '${self:custom.orderTableName}'
     AttributeDefinitions:
       - AttributeName: orderId
         AttributeType: S
       - AttributeName: dateOrdered
-        AttributeType: S
+        AttributeType: 'N'
     KeySchema:
       - AttributeName: orderId
         KeyType: HASH
-      - AttributeName: dateOrdered
-        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: byDate
+        KeySchema:
+          - AttributeName: orderId
+            KeyType: HASH
+          - AttributeName: dateOrdered
+            KeyType: RANGE
+        Projection:
+          ProjectionType: 'ALL'
+
     BillingMode: PAY_PER_REQUEST
     Tags:
       - Key: name
         Value: order-table
+
+#
+# open Support ticket: 
+#    Amazon SES Reputation Dashboard
+#    Sending Pause for 198,626 more emails. Complaint Rate 1.04%
+
+# cognitoUserPool:
+#   Type: AWS::Cognito::UserPool
+#   Properties:
+#     EmailConfiguration:
+#       EmailSendingAccount: DEVELOPER
+#       ReplyToEmailAddress: info@onechanhs.ca
+#       From: info@onechanhs.ca
+#       SourceArn: arn:aws:ses:us-east-1:${aws:accountId}:identity/onechanhs.ca #006033392195
+#     UsernameAttributes:
+#       - email
+#     UserPoolName: "OneChanhsUsers"
+#     AdminCreateUserConfig:
+#       AllowAdminCreateUserOnly: true
+#       InviteMessageTemplate:
+#         EmailMessage: "Hi {username}! Your temp password is the following: {####} ."
+#         EmailSubject: "Welcome to One Chanhs!"
+#     VerificationMessageTemplate:
+#       DefaultEmailOption: "CONFIRM_WITH_CODE"
+#       EmailSubject: "One Chanhs Confirmation Code"
+#       EmailMessage: "Hi there! Heres your confirmation code: {####}"
 
 cognitoUserPool:
   Type: AWS::Cognito::UserPool
@@ -99,6 +146,7 @@ cognitoAdminCognitoRole:
             - Effect: Allow
               Action:
                 - "dynamodb:*"
+                - "appsync:GraphQL"
               Resource:
                 - !GetAtt storeItem.Arn
                 - !GetAtt orderItem.Arn
@@ -137,6 +185,7 @@ cognitoCustomerCognitoRole:
             - Effect: Allow
               Action:
                 - "dynamodb:*"
+                - "appsync:GraphQL"
               Resource:
                 - !GetAtt orderItem.Arn
                 - !GetAtt order.Arn
@@ -150,52 +199,44 @@ cognitoCustomerCognitoRole:
     RoleName: "onechanhs-customer-role"
 
 
-# cognitoUnauthIAMRole:
-#   Type: AWS::IAM::Role
-#   Properties:
-#     AssumeRolePolicyDocument:
-#       Version: "2012-10-17"
-#       Statement:
-#         - Effect: Allow
-#           Principal:
-#             Federated:
-#               - "cognito-identity.amazonaws.com"
-#           Action:
-#             - "sts:AssumeRoleWithWebIdentity"
-#     Description: "IAM role for OneChanh customers"
-#     Policies:
-#       - PolicyName: "onechanhs-unauth-role"
-#         PolicyDocument:
-#           Version: "2012-10-17"
-#           Statement:
-#             - Effect: Allow
-#               Action:
-#                 - "appsync:GraphQL"
-#               Resource:
-#                 - !GetAtt orderItem.Arn
-#                 - !GetAtt order.Arn
-#             - Effect: Allow
-#               Action:
-#                 - "dynamodb:GetItem"
-#                 - "dynamodb:Query"
-#                 - "dynamodb:BatchGetItem"
-#               Resource:
-#                 - !GetAtt storeItem.Arn
-#     RoleName: "onechanhs-unauth-role"
+cognitoUnauthIAMRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Description: "IAM role for OneChanh customers"
+    Policies:
+      - PolicyName: "onechanhs-unauth-role"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "appsync:GraphQL"
+              Resource:
+                - "arn:aws:appsync:ca-central-1:${aws:accountId}:apis/7h62scs3c5bxznpi3myvexn7my/types/Query/fields/getStoreItemById"
+    RoleName: "onechanhs-unauth-role"
     
 
-# cognitoIdentityPool:
-#   Type: AWS::Cognito::IdentityPool
-#   Properties:
-#     AllowUnauthenticatedIdentities: true
-#     CognitoIdentityProviders:
-#       - ClientId: !Ref cognitoUserPoolClient
-#         ProviderName: !GetAtt cognitoUserPool.ProviderName
-#     IdentityPoolName: OneChanhsIdentityPool
+cognitoIdentityPool:
+  Type: AWS::Cognito::IdentityPool
+  Properties:
+    AllowUnauthenticatedIdentities: true
+    CognitoIdentityProviders:
+      - ClientId: !Ref cognitoUserPoolClient
+        ProviderName: !GetAtt cognitoUserPool.ProviderName
+    IdentityPoolName: OneChanhsIdentityPool
 
-# cognitoIdentityPoolRoleAttachment:
-#   Type: AWS::Cognito::IdentityPoolRoleAttachment
-#   Properties:
-#     IdentityPoolId: !Ref cognitoIdentityPool
-#     Roles:
-#       unauthenticated: !GetAtt cognitoUnauthIAMRole.Arn
+cognitoIdentityPoolRoleAttachment:
+  Type: AWS::Cognito::IdentityPoolRoleAttachment
+  Properties:
+    IdentityPoolId: !Ref cognitoIdentityPool
+    Roles:
+      unauthenticated: !GetAtt cognitoUnauthIAMRole.Arn

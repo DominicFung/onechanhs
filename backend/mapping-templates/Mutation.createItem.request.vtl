@@ -8,21 +8,19 @@
     "itemId" : $util.dynamodb.toDynamoDBJson($util.autoId())
   },
   "attributeValues" : {
-    "title"       : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.title)
-    "description" : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.description)
-    "pictures"    : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.pictures)
-    "price"       : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.price)
+    "title"       : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.title),
+    "description" : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.description),
+    "price"       : $util.dynamodb.toDynamoDBJson($ctx.args.newItem.price),
+    "currency"    : $util.dynamodb.toDynamoDBJson("CAN"),
 
-    "currency"    : $util.dynamodb.toDynamoDBJson("CAN")
+    "hashtags"    : $util.dynamodb.toDynamoDBJson($!{emptyList}),
+    "shortDescription": $util.dynamodb.toDynamoDBJson(""),
 
-    "hashtags"    : $util.dynamodb.toDynamoDBJson($!{emptyList})
-    "shortDescription": $util.dynamodb.toDynamoDBJson("")
+    "customizeTextInstructions": $util.dynamodb.toDynamoDBJson(""),
+    "sizes"       : $util.dynamodb.toDynamoDBJson($!{emptyList}),
+    "colors"      : $util.dynamodb.toDynamoDBJson($!{emptyList}),
+    "orientations": $util.dynamodb.toDynamoDBJson($!{emptyList}),
 
-    "customizeTextInstructions": $util.dynamodb.toDynamoDBJson("")
-    "sizes"       : $util.dynamodb.toDynamoDBJson($!{emptyList})
-    "colors"      : $util.dynamodb.toDynamoDBJson($!{emptyList})
-    "orientations": $util.dynamodb.toDynamoDBJson($!{emptyList})
-
-    isPublished: $util.dynamodb.toDynamoDBJson($!{F})
+    "isPublished": $util.dynamodb.toDynamoDBJson($!{F})
   }
 }

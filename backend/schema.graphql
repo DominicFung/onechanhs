@@ -4,13 +4,19 @@ schema {
 }
 
 type Query {
-  getStoreItemById(itemId: ID!): StoreItem!
-  listItems(limit: Int!, nextToken: String): StorePage!
+  getStoreItemById(itemId: ID!): StoreItem! 
+    @aws_iam @aws_cognito_user_pools(cognito_groups: ["Admin", "Customer"])
+  getStoreItemWithPic(itemId: ID!): StoreItem! 
+  getStoreItemByTitle(title: String!): StoreItem! 
+
+  listItems(limit: Int!, nextToken: String): StorePage! 
+
+  getOrder(orderId: String!): Order!
 }
 
 type Mutation {
   createItem(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
-  createOder(newOrder: OrderInput): Boolean!
+  createOrder(newOrder: OrderInput): OrderOutput!
 }
 
 type StorePage {
@@ -18,10 +24,19 @@ type StorePage {
   nextToken: String
 }
 
+type OrderOutput {
+  orderId: ID!
+
+  address: String!
+  postalCode: String!
+  city: String!
+  state: String
+  country: String!
+}
+
 input ItemInput {
   title: String!
   description: String
-  pictures: [AWSURL]!
   price: Float!
 }
 
@@ -47,12 +62,16 @@ input OrderItemInput {
 }
 
 # -- BASE TYPES --
+# @aws_iam @aws_cognito_user_pools
+type StoreItem {
+  itemId: ID!
+  byLink: String!
 
-type StoreItem @aws_iam {
-  storeItemId: ID!
   title: String!
-  pictures: [String]!
   description: String
+  
+  focusPictureUrl: String  # always the first image   - not saved in DB
+  pictures: [String]!      # always thumbnails        - saved in DB as S3 Keys
 
   price: Float!
   currency: String!
