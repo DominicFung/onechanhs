@@ -9,7 +9,7 @@ type Query {
   getStoreItemWithPic(itemId: ID!): StoreItem! 
   getStoreItemByTitle(title: String!): StoreItem! 
 
-  listItems(limit: Int!, nextToken: String): StorePage! 
+  listItems(limit: Int!, nextToken: String): StorePage! @aws_iam @aws_cognito_user_pools
 
   getOrder(orderId: String!): Order!
 }
@@ -19,7 +19,7 @@ type Mutation {
   createOrder(newOrder: OrderInput): OrderOutput!
 }
 
-type StorePage {
+type StorePage @aws_iam @aws_cognito_user_pools {
   storeItems: [StoreItem]
   nextToken: String
 }
@@ -63,7 +63,7 @@ input OrderItemInput {
 
 # -- BASE TYPES --
 # @aws_iam @aws_cognito_user_pools
-type StoreItem {
+type StoreItem @aws_iam @aws_cognito_user_pools {
   itemId: ID!
   byLink: String!
 

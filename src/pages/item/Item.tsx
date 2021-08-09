@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom'
 
 import ItemTab from './ItemTab'
 
-import { API } from 'aws-amplify'
+import { API, graphqlOperation } from 'aws-amplify'
 import { StoreItem } from '../../API'
 
 //import { getStoreItemById } from '../../graphql/queries'
@@ -21,7 +21,7 @@ interface StoreItemProps {
 export default function Item(props: StoreItemProps){
 
   const { id } = useParams() as any
-  const [ storeItem, setStoreItem ] = React.useState<StoreItem|null>(null)
+  const [ storeItem, setStoreItem ] = React.useState<StoreItem|null>(null) //StoreItem
 
   const [sidePannelHeight, setSidePannelHeight] = React.useState(0)
   const sidePannelRef = React.useRef(null)
@@ -41,10 +41,16 @@ export default function Item(props: StoreItemProps){
       query: getStoreItemWithPic,
       variables: { itemId: id },
       authMode: 'AWS_IAM' as any
-    }) as GraphQLResult<{ getStoreItemById?: StoreItem }>
+    }) as GraphQLResult<{ getStoreItemWithPic?: StoreItem }>
 
-    console.log(si.data?.getStoreItemById)
-    setStoreItem(si.data?.getStoreItemById || null)
+    // let si = await API.graphql(graphqlOperation({
+    //   query: `
+
+    //   `
+    // })) as GraphQLResult<{ getStoreItemWithPic?: any }> //StoreItem
+
+    console.log(si.data?.getStoreItemWithPic)
+    setStoreItem(si.data?.getStoreItemWithPic || null)
   }
 
   // const _temp = {

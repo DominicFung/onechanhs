@@ -8,8 +8,9 @@ export const createItem = /* GraphQL */ `
       itemId
       byLink
       title
-      pictures
       description
+      focusPictureUrl
+      pictures
       price
       currency
       discountPrice
@@ -23,8 +24,15 @@ export const createItem = /* GraphQL */ `
     }
   }
 `;
-export const createOder = /* GraphQL */ `
-  mutation CreateOder($newOrder: OrderInput) {
-    createOder(newOrder: $newOrder)
+export const createOrder = /* GraphQL */ `
+  mutation CreateOrder($newOrder: OrderInput) {
+    createOrder(newOrder: $newOrder) {
+      orderId
+      address
+      postalCode
+      city
+      state
+      country
+    }
   }
 `;

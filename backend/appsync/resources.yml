@@ -221,7 +221,8 @@ cognitoUnauthIAMRole:
               Action:
                 - "appsync:GraphQL"
               Resource:
-                - "arn:aws:appsync:ca-central-1:${aws:accountId}:apis/7h62scs3c5bxznpi3myvexn7my/types/Query/fields/getStoreItemById"
+                - 'arn:aws:appsync:ca-central-1:${aws:accountId}:apis/*' # THIS IS OK WHILE DEVELOPMENT
+                # - "arn:aws:appsync:ca-central-1:${aws:accountId}:apis/7h62scs3c5bxznpi3myvexn7my/types/Query/fields/getStoreItemById"
     RoleName: "onechanhs-unauth-role"
     
 

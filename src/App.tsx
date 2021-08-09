@@ -2,6 +2,9 @@ import "tailwindcss/tailwind.css"
 import './index.css'
 
 import React, { useEffect } from 'react'
+import { Auth } from 'aws-amplify'
+import config from './aws-exports'
+import { withAuthenticator, AmplifySignOut } from "@aws-amplify/ui-react"
 import { 
   Switch, Route, useLocation
 } from "react-router-dom"
@@ -18,9 +21,22 @@ import Cart from './pages/cart/Cart'
 // https://tailwindcss.com/docs/configuration
 
 // https://tailwindcss.com/docs/guides/create-react-app
-export default function App() {
+function App() {
   let location = useLocation()
   const [page, setPage] = React.useState('Home')
+
+  const clearCachedIdentity = async () => {
+    console.log('checking credentials ..')
+    const creds = await Auth.currentCredentials()
+    console.log(creds)
+    // if ((creds as any).message?.includes('Access to Identity') && (creds as any).message?.includes('is forbidden')) {
+    //   console.log('FORBIDDEN detected: clearing credentails')
+    //   window.localStorage.removeItem(`CognitoIdentityId-${config.aws_cognito_identity_pool_id}`)
+    //   await Auth.currentCredentials()
+    // }
+  }
+
+  //useEffect(() => { clearCachedIdentity() }, [])
 
   useEffect(() => {
     if (location) {
@@ -36,6 +52,7 @@ export default function App() {
 
   return (
       <div className="">
+        {/* <AmplifySignOut /> */}
         <Navbar page={page}/>
         
         <Switch>
@@ -46,7 +63,7 @@ export default function App() {
             <Cart />
           </Route>
           <Route path="/products">
-            <Products />
+            <Products page={page} />
           </Route>
           <Route path="/">
             <Home />
@@ -57,3 +74,6 @@ export default function App() {
       </div>
   )
 }
+
+export default App
+//export default withAuthenticator(App)

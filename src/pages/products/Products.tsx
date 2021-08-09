@@ -1,17 +1,47 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
-import StoreItem from "./components/StoreItem"
+import { API } from 'aws-amplify'
+import { listItems } from '../../graphql/queries'
+import { StoreItem } from '../../API'
+import { GraphQLResult, GRAPHQL_AUTH_MODE } from '@aws-amplify/api-graphql'
 
-export default function Products() {
+import StoreItemComponent from "./components/StoreItem"
 
-  const [products, setProducts] = React.useState(_temp)
+interface ProductProps {
+  page: string
+}
+
+export default function Products(props: ProductProps) {
+
+  const [products, setProducts] = React.useState<StoreItem[]>([])
+
+  const getAllProducts = async () => {
+    let list = API.graphql({
+      query: listItems,
+      variables: { limit: 20 },
+      authMode: GRAPHQL_AUTH_MODE.AWS_IAM
+    }) as GraphQLResult<{ listItems?: { storeItems: StoreItem[], nextToken?: string } }>
+
+    console.log(list.data?.listItems)
+    setProducts(list.data?.listItems?.storeItems || [])
+  }
+
+  useEffect(() => {
+    if (props.page === "Products" ) {
+      getAllProducts()
+    }
+  }, [props.page])
+  
 
   return (
   <div className="w-full p-4 pt-32 flex justify-center">
     <div className="container mx-lg">
       <div className="pt-20 pb-20 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-8">
-        {products.map((item) => {
-          return <StoreItem title={item.title} price={item.price} images={item.images} currency={'CAN'} />
+        {products.map((item, i) => {
+          return <StoreItemComponent key={i} 
+                    title={item.title} price={item.price} 
+                    images={item.pictures ? item.pictures as string[] : []} currency={'CAN'}
+                  />
         })}
       </div>
     </div>

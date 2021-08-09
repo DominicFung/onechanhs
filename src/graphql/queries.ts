@@ -8,8 +8,9 @@ export const getStoreItemById = /* GraphQL */ `
       itemId
       byLink
       title
-      pictures
       description
+      focusPictureUrl
+      pictures
       price
       currency
       discountPrice
@@ -29,8 +30,9 @@ export const getStoreItemWithPic = /* GraphQL */ `
       itemId
       byLink
       title
-      pictures
       description
+      focusPictureUrl
+      pictures
       price
       currency
       discountPrice
@@ -50,8 +52,9 @@ export const getStoreItemByTitle = /* GraphQL */ `
       itemId
       byLink
       title
-      pictures
       description
+      focusPictureUrl
+      pictures
       price
       currency
       discountPrice
@@ -72,8 +75,9 @@ export const listItems = /* GraphQL */ `
         itemId
         byLink
         title
-        pictures
         description
+        focusPictureUrl
+        pictures
         price
         currency
         discountPrice
@@ -86,6 +90,23 @@ export const listItems = /* GraphQL */ `
         isPublished
       }
       nextToken
+    }
+  }
+`;
+export const getOrder = /* GraphQL */ `
+  query GetOrder($orderId: String!) {
+    getOrder(orderId: $orderId) {
+      orderId
+      address
+      postalCode
+      city
+      state
+      country
+      discount
+      discountCodeUsed
+      isFulfilled
+      fulfilledDate
+      dateOrdered
     }
   }
 `;

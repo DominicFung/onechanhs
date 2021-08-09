@@ -91,7 +91,7 @@ custom:
       - dev
 
   amplify:
-    - filename: ../src/aws-exports.js
+    - filename: ../../src/aws-exports.js
       type: javascript
       appClient: cognitoUserPoolClient
       s3Bucket: s3SharedBucketArtifacts
@@ -100,9 +100,13 @@ custom:
     #     amplify add codegen --apiId uawusirgujavffiymdvu3cqdhq
     #     amplify codegen
 
-    # - filename: ../src/graphql/schema.json
+    # - filename: ../../schema.graphql
+    #   type: graphql
+    # - filename: ../../schema.json
     #   type: schema.json
-    # - filename: ../src/API.ts
+    
+    
+    # - filename: ../../src/API.ts
     #   type: appsync
 
   appSync:
