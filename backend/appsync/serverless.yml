@@ -33,8 +33,10 @@ provider:
           Action:
             - s3:PutObject
             - s3:ListBucket
+            - s3:GetObject
+            - s3:GetObjectVersion
             - s3:GetSignedUrlPromise
-          Resource: 'arn:aws:s3:::${self:custom.imagesBucketName}'
+          Resource: 'arn:aws:s3:::${self:custom.imagesBucketName}/*'
         - Effect: Allow
           Action:
             - dynamodb:Scan
@@ -74,6 +76,23 @@ functions:
       orderTable: '${self:custom.orderTableName}'
       orderItemsTable: '${self:custom.orderItemTableName}'
 
+  create-item-full:
+    handler: functions/handlers/storeItems.createItemFull
+    environment:
+      table: ${self:custom.storeItemTableName}
+
+  image-resize:
+    handler: functions/handlers/image.imageResize
+    events:
+      - s3:
+          bucket: ${self:custom.imagesBucketName}
+          event: s3:ObjectCreated:*
+          existing: true
+
+  image-resize-test:
+    handler: functions/handlers/image.test
+  
+
 resources:
   Resources:
     ${file(./resources.yml)}
@@ -85,6 +104,9 @@ custom:
   storeItemTableName: storeItem
   orderTableName: order
   orderItemTableName: orderItem
+
+  includeDependencies:
+    - 'node_modules/jimp/**'
 
   dynamodb:
     stages:
@@ -149,6 +171,12 @@ custom:
         dataSource: "createOrder"
         request: Mutation.general.request.vtl
         response: Mutation.general.response.vtl
+
+      - type: Mutation
+        field: createItemFull
+        dataSource: "createItemFull"
+        request: Mutation.general.request.vtl
+        response: Mutation.general.response.vtl
     
     dataSources:
       - type: AMAZON_DYNAMODB
@@ -170,6 +198,11 @@ custom:
         name: "createOrder"
         config:
           functionName: create-order
+
+      - type: AWS_LAMBDA
+        name: "createItemFull"
+        config:
+          functionName: create-item-full
 
 plugins:
   - serverless-plugin-typescript

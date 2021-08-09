@@ -16,6 +16,8 @@ type Query {
 
 type Mutation {
   createItem(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
+  createItemFull(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
+
   createOrder(newOrder: OrderInput): OrderOutput!
 }
 

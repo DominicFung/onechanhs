@@ -1,4 +1,5 @@
 import AWS = require('aws-sdk')
+import { AWSError } from 'aws-sdk'
 
 import dynamoService = require('../../utils/dynamo')
 import s3Service = require('../../utils/s3')
@@ -6,6 +7,12 @@ import s3Service = require('../../utils/s3')
 import {
   prepareError, prepareResponse
 } from '../../utils/utils'
+
+export interface StoreItemInput {
+  title: string
+  description: string
+  price: number
+}
 
 export interface StoreItem {
   itemId: string
@@ -141,4 +148,18 @@ export const getStoreItemWithThumb = async (event: { arguments: any }): Promise<
     console.error(e)
     return { error: e.toString() }
   }
+}
+
+export const createItemFull = async (event: { arguments: any }): Promise<any> => {
+  const { table } = process.env
+  const { newItem }: { newItem: StoreItemInput } = event.arguments
+  const result = await dynamoService.createItem(table, newItem)
+
+  if ((result as unknown as AWSError).code) { 
+    console.error(result)
+    return false
+  }
+
+  console.log(result)
+  return true
 }

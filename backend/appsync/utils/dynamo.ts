@@ -3,6 +3,7 @@ import { v4 } from 'uuid'
 
 import { QueryOutput } from 'aws-sdk/clients/dynamodb'
 import { OrderInput } from '../functions/handlers/orders'
+import { StoreItemInput } from '../functions/handlers/storeItems'
 
 const REGION = 'ca-central-1'
 
@@ -37,7 +38,7 @@ export const putOrder = async (
   payload: OrderInput
 ) => {
   const dynamodb = new AWS.DynamoDB({region: REGION })
-  let orderId = v4()
+  const orderId = v4()
 
   const params = {
     TableName: orderTable,
@@ -93,4 +94,36 @@ export const scanforAllItems = (table: string = "storeItem", limit: number = 20,
 
   const result = dynamodb.scan(params).promise()
   return result
+}
+
+export const createItem = (table: string = "storeItem", payload: StoreItemInput) => {
+  const dynamodb = new AWS.DynamoDB({region: REGION })
+  const storeItemId =  v4()
+  const linkId = payload.title.toLowerCase().split(" ").join("-")
+
+  const params = {
+    TableName: table,
+    Item: {
+      'itemId':            { S: storeItemId },
+      'linkId':            { S: linkId },
+
+      'title':             { S: payload.title },
+      'description':       { S: payload.description },
+      'price':             { N:  payload.price.toFixed(2)},
+      'currency':          { S: 'CAN' },
+
+      'hashtags':          { L: [] },
+      'shortDescription':  { S: "" },
+
+      'customizeTextInstructions': { S: "" },
+      'sizes':            { L: [] },
+      'colors':           { L: [] },
+      'orientations':     { L: [] },
+
+      'isPublished':      { BOOL: false }
+    }
+  }
+
+  const results = dynamodb.putItem(params).promise()
+  return results
 }
