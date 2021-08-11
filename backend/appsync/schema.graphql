@@ -6,10 +6,11 @@ schema {
 type Query {
   getStoreItemById(itemId: ID!): StoreItem! 
     @aws_iam @aws_cognito_user_pools(cognito_groups: ["Admin", "Customer"])
-  getStoreItemWithPic(itemId: ID!): StoreItem! 
-  getStoreItemByTitle(title: String!): StoreItem! 
+  getStoreItemWithPic(itemId: ID!): StoreItem! @aws_iam @aws_cognito_user_pools
+  getStoreItemByTitle(title: String!): StoreItem! @aws_iam @aws_cognito_user_pools
 
   listItems(limit: Int!, nextToken: String): StorePage! @aws_iam @aws_cognito_user_pools
+  getHDImage(key: String): HdImageURL @aws_iam @aws_cognito_user_pools
 
   getOrder(orderId: String!): Order!
 }
@@ -24,6 +25,10 @@ type Mutation {
 type StorePage @aws_iam @aws_cognito_user_pools {
   storeItems: [StoreItem]
   nextToken: String
+}
+
+type HdImageURL @aws_iam @aws_cognito_user_pools {
+  url: AWSURL
 }
 
 type OrderOutput {
@@ -67,13 +72,14 @@ input OrderItemInput {
 # @aws_iam @aws_cognito_user_pools
 type StoreItem @aws_iam @aws_cognito_user_pools {
   itemId: ID!
-  byLink: String!
+  linkId: String!
 
   title: String!
   description: String
   
-  focusPictureUrl: String  # always the first image   - not saved in DB
-  pictures: [String]!      # always thumbnails        - saved in DB as S3 Keys
+  focusPictureUrl: String   # always the first image   - not saved in DB
+  pictures: [String]        # always thumbnails        - saved in DB as S3 Keys
+  picKeys: [String]         # used to fetch HD presigned URLs
 
   price: Float!
   currency: String!
@@ -98,6 +104,8 @@ type Order {
   city: String!
   state: String
   country: String!
+
+  orderItems: [OrderItem]
 
   discount: Float
   discountCodeUsed: String

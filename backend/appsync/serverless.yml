@@ -36,6 +36,20 @@ provider:
             - s3:GetObject
             - s3:GetObjectVersion
             - s3:GetSignedUrlPromise
+            - s3:DeleteObject
+            - s3:DeleteObjectVersion
+            - s3:PutLifecycleConfiguration
+          Resource: 'arn:aws:s3:::${self:custom.imagesBucketName}'
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:ListBucket
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:GetSignedUrlPromise
+            - s3:DeleteObject
+            - s3:DeleteObjectVersion
+            - s3:PutLifecycleConfiguration
           Resource: 'arn:aws:s3:::${self:custom.imagesBucketName}/*'
         - Effect: Allow
           Action:
@@ -67,6 +81,12 @@ functions:
       table: ${self:custom.storeItemTableName}
       signed_url_expires: 86400
 
+  get-hd-image:
+    handler: functions/handlers/storeItems.getHDImage
+    environment:
+      bucket: ${self:custom.imagesBucketName}
+      signed_url_expires: 86400
+
   list-store-items:
     handler: functions/handlers/storeItems.listItems
 
@@ -83,6 +103,7 @@ functions:
 
   image-resize:
     handler: functions/handlers/image.imageResize
+    timeout: 20
     events:
       - s3:
           bucket: ${self:custom.imagesBucketName}
@@ -161,6 +182,12 @@ custom:
         response: Query.general.response.vtl
 
       - type: Query
+        field: getHDImage
+        dataSource: "getHDImage"
+        request: Query.general.request.vtl
+        response: Query.general.response.vtl
+
+      - type: Query
         field: listItems
         dataSource: "listItems"
         request: Query.general.request.vtl
@@ -203,6 +230,11 @@ custom:
         name: "createItemFull"
         config:
           functionName: create-item-full
+
+      - type: AWS_LAMBDA
+        name: "getHDImage"
+        config:
+          functionName: get-hd-image
 
 plugins:
   - serverless-plugin-typescript

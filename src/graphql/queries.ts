@@ -6,11 +6,12 @@ export const getStoreItemById = /* GraphQL */ `
   query GetStoreItemById($itemId: ID!) {
     getStoreItemById(itemId: $itemId) {
       itemId
-      byLink
+      linkId
       title
       description
       focusPictureUrl
       pictures
+      picKeys
       price
       currency
       discountPrice
@@ -28,11 +29,12 @@ export const getStoreItemWithPic = /* GraphQL */ `
   query GetStoreItemWithPic($itemId: ID!) {
     getStoreItemWithPic(itemId: $itemId) {
       itemId
-      byLink
+      linkId
       title
       description
       focusPictureUrl
       pictures
+      picKeys
       price
       currency
       discountPrice
@@ -50,11 +52,12 @@ export const getStoreItemByTitle = /* GraphQL */ `
   query GetStoreItemByTitle($title: String!) {
     getStoreItemByTitle(title: $title) {
       itemId
-      byLink
+      linkId
       title
       description
       focusPictureUrl
       pictures
+      picKeys
       price
       currency
       discountPrice
@@ -73,11 +76,12 @@ export const listItems = /* GraphQL */ `
     listItems(limit: $limit, nextToken: $nextToken) {
       storeItems {
         itemId
-        byLink
+        linkId
         title
         description
         focusPictureUrl
         pictures
+        picKeys
         price
         currency
         discountPrice
@@ -93,6 +97,13 @@ export const listItems = /* GraphQL */ `
     }
   }
 `;
+export const getHDImage = /* GraphQL */ `
+  query GetHDImage($key: String) {
+    getHDImage(key: $key) {
+      url
+    }
+  }
+`;
 export const getOrder = /* GraphQL */ `
   query GetOrder($orderId: String!) {
     getOrder(orderId: $orderId) {
@@ -102,6 +113,15 @@ export const getOrder = /* GraphQL */ `
       city
       state
       country
+      orderItems {
+        orderItemId
+        purchasePrice
+        text
+        size
+        color
+        orientation
+        additionalInstructions
+      }
       discount
       discountCodeUsed
       isFulfilled

@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "aws-amplify-serverless-plugin": "^1.4.1",
+    "heic-convert": "^1.2.4",
     "jimp": "^0.16.1",
     "serverless": "^2.53.1",
     "serverless-appsync-plugin": "^1.11.3",

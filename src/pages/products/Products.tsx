@@ -16,12 +16,13 @@ export default function Products(props: ProductProps) {
   const [products, setProducts] = React.useState<StoreItem[]>([])
 
   const getAllProducts = async () => {
-    let list = API.graphql({
+    let list = await API.graphql({
       query: listItems,
       variables: { limit: 20 },
       authMode: GRAPHQL_AUTH_MODE.AWS_IAM
     }) as GraphQLResult<{ listItems?: { storeItems: StoreItem[], nextToken?: string } }>
 
+    console.log(list)
     console.log(list.data?.listItems)
     setProducts(list.data?.listItems?.storeItems || [])
   }
@@ -38,9 +39,10 @@ export default function Products(props: ProductProps) {
     <div className="container mx-lg">
       <div className="pt-20 pb-20 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-8">
         {products.map((item, i) => {
-          return <StoreItemComponent key={i} 
+          return <StoreItemComponent key={i} id={item.itemId}
                     title={item.title} price={item.price} 
-                    images={item.pictures ? item.pictures as string[] : []} currency={'CAN'}
+                    images={item.pictures ? item.pictures as string[] : ["https://source.unsplash.com/random"]} currency={'CAN'}
+                    discount={item.discountPrice ? item.discountPrice : undefined}
                   />
         })}
       </div>

@@ -6,10 +6,10 @@ import { useParams } from 'react-router-dom'
 import ItemTab from './ItemTab'
 
 import { API, graphqlOperation } from 'aws-amplify'
-import { StoreItem } from '../../API'
+import { StoreItem, HdImageURL } from '../../API'
 
 //import { getStoreItemById } from '../../graphql/queries'
-import { getStoreItemWithPic } from '../../graphql/queries'
+import { getStoreItemWithPic, getHDImage } from '../../graphql/queries'
 import { GraphQLResult } from '@aws-amplify/api-graphql'
 
 const _SIDE_PANNEL_ID = "item_side_pannel"
@@ -27,6 +27,7 @@ export default function Item(props: StoreItemProps){
   const sidePannelRef = React.useRef(null)
 
   const [ pictureIndex, setPicutreIndex] = React.useState(0)
+  const [ focusPictureUrl, setFocusPictureUrl ] = React.useState("")
 
   const [ quantityText, setQuantityText ] = React.useState("1")
   const [ quantity, setQuantity ] = React.useState(1)
@@ -43,28 +44,40 @@ export default function Item(props: StoreItemProps){
       authMode: 'AWS_IAM' as any
     }) as GraphQLResult<{ getStoreItemWithPic?: StoreItem }>
 
-    // let si = await API.graphql(graphqlOperation({
-    //   query: `
-
-    //   `
-    // })) as GraphQLResult<{ getStoreItemWithPic?: any }> //StoreItem
-
     console.log(si.data?.getStoreItemWithPic)
-    setStoreItem(si.data?.getStoreItemWithPic || null)
+    if (si.data?.getStoreItemWithPic) {
+      setStoreItem(si.data?.getStoreItemWithPic || null)
+      setFocusPictureUrl(si.data?.getStoreItemWithPic.focusPictureUrl || "")
+    } else { console.error(`item ${id} does not exist.`) }
   }
 
-  // const _temp = {
-  //   id: "testtesttest",
-  //   title: "Custom Wedding Mug",
-  //   price: 45,
-  //   pictures: ['https://source.unsplash.com/random'],
-  //   colors: ['#3a4c17', '#b45d67', '#01aede', '#62d5c4'],
-  //   description: "This is a fake description of the wedding cup. Its cool, buy it."
-  // }
+  const getFocusPicture = async (picKey: string) => {
+    if (picKey == "") return
+    setFocusPictureUrl("")
+    let fp = await API.graphql({
+      query: getHDImage,
+      variables: { key: picKey },
+      authMode: 'AWS_IAM' as any
+    }) as GraphQLResult<{getHDImage?: HdImageURL}>
+
+    console.log(fp.data?.getHDImage)
+    if (fp.data?.getHDImage?.url) { 
+      setFocusPictureUrl(fp.data?.getHDImage.url)
+    }
+  }
 
   useEffect(() => {
     getStoreItem(id)
   }, [id])
+
+  useEffect(() => {
+    if (storeItem?.picKeys){
+      if (storeItem?.picKeys[pictureIndex]){
+        let url = storeItem?.picKeys[pictureIndex]
+        getFocusPicture(url || "")
+      }
+    }
+  }, [pictureIndex])
 
   const handleResize = () => {
     if (sidePannelRef.current) {
@@ -134,29 +147,20 @@ export default function Item(props: StoreItemProps){
             <div className="grid grid-cols-6 gap-2 h-full">
               <div className="w-full col-span-1">
                 <div className="w-full grid grid-flow-row gap-1 justify-end">
-                  { storeItem?.pictures.map((v, i) => {
+                  { storeItem?.pictures?.map((v, i) => {
                       return (
-                        <div key={i} style={{backgroundImage: `url(${storeItem?.pictures[i]})`, backgroundColor: "#afc4c0"}}
+                        <div key={i} style={{
+                          backgroundImage: `url(${storeItem?.pictures ? storeItem?.pictures[i] : ""})`, backgroundColor: "#afc4c0",
+                          border: pictureIndex == i ? "solid gray 2px" : ""
+                        }} onClick={() => { setPicutreIndex(i) }}
                           className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                         />
                       )
                   })}
-                  {/* <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
-                    className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
-                  />
-                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
-                    className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
-                  />
-                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
-                    className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
-                  />
-                  <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] || "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}}
-                    className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
-                  /> */}
                 </div>
               </div>
               <div className="w-full col-span-5 h-full">
-                <div style={{backgroundImage: `url(${storeItem?.pictures[pictureIndex] })`, backgroundColor: "#afc4c0"}}
+                <div style={{backgroundImage: `url(${focusPictureUrl}), url(${storeItem?.pictures ? storeItem?.pictures[pictureIndex] : ""})`, backgroundColor: "#afc4c0"}}
                   className="w-full h-full bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                 />
               </div>

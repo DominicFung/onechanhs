@@ -6,11 +6,35 @@ export const createItem = /* GraphQL */ `
   mutation CreateItem($newItem: ItemInput) {
     createItem(newItem: $newItem) {
       itemId
-      byLink
+      linkId
       title
       description
       focusPictureUrl
       pictures
+      picKeys
+      price
+      currency
+      discountPrice
+      hashtags
+      shortDescription
+      customizeTextInstructions
+      sizes
+      colors
+      orientations
+      isPublished
+    }
+  }
+`;
+export const createItemFull = /* GraphQL */ `
+  mutation CreateItemFull($newItem: ItemInput) {
+    createItemFull(newItem: $newItem) {
+      itemId
+      linkId
+      title
+      description
+      focusPictureUrl
+      pictures
+      picKeys
       price
       currency
       discountPrice

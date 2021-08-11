@@ -22,7 +22,9 @@ Amplify.configure({
 
 const myAppConfig = {
   'aws_appsync_graphqlEndpoint': config.aws_appsync_graphqlEndpoint,
-  'aws_appsync_region': config.aws_appsync_region,
+  
+  // amplify-plugin will use us-east-2 - thats wrong
+  'aws_appsync_region': "ca-central-1", //config.aws_appsync_region,
   'aws_appsync_authenticationType': 'AMAZON_COGNITO_USER_POOLS'
 }
 

@@ -1,7 +1,9 @@
 import AWS = require('aws-sdk')
+import { AWSError } from 'aws-sdk'
 import { GetObjectOutput } from 'aws-sdk/clients/s3'
 
 import Jimp = require('jimp')
+import { convertHeic } from '../functions/handlers/image'
 
 const s3 = new AWS.S3()
 const _THUMBNAIL = "_thumbnail."
@@ -14,15 +16,14 @@ export const waitForObject = (bucket: string, key: string) => {
 }
 
 export const list = async (bucket: string, prefix: string) => {
+  console.log(`S3 list: bucket=${bucket} prefix=${prefix}`)
   const params = {
       Bucket: bucket,
       Prefix: prefix
-  };
-  const result = await s3.listObjects(params).promise();
-  
-  console.log('S3.list', JSON.stringify(result));
-  
-  return result.Contents;
+  }
+  const result = await s3.listObjectsV2(params).promise()
+  console.log('S3.list', JSON.stringify(result))
+  return result.Contents
 }
 
 export const getSignedUrl = async (bucket: string, key: string) => {
@@ -54,9 +55,8 @@ export const resizeImage = async (
   }))
   const imageBuffer: GetObjectOutput = await s3.getObject({Bucket: bucket, Key: file}).promise()
   if (imageBuffer && imageBuffer.Body) {
-    console.log('Inside imageBuffer')
+    console.log('resizeImage(): imageBuffer =')
     console.log(imageBuffer.Body)
-    console.log(Jimp)
     
     const jimpImage = await Jimp.read(imageBuffer.Body as Buffer)
     const mime = jimpImage.getMIME()
@@ -70,7 +70,9 @@ export const resizeImage = async (
       const tempBeginning = thumbFileTemp.slice(0, -2).join(".") || ""
       const tempEnding = thumbFileTemp[thumbFileTemp.length-2]+_THUMBNAIL+thumbFileTemp[thumbFileTemp.length-1]
 
-      const fileName = tempBeginning+"."+tempEnding
+      let fileName = tempEnding
+      if (tempBeginning != "") fileName = tempBeginning+"."+tempEnding
+      
       console.log(`resizeImage: thumbnail file name: ${fileName}`)
 
       const writeParam = {
@@ -83,6 +85,69 @@ export const resizeImage = async (
 
       const result = s3.putObject(writeParam).promise()
       return result
-    } else { console.error(`resizeImage: "${file}" does not contain a period "."`) }
-  } else { console.error(`S3 GetObject: imageBuffer is null.`) }
+    } else { 
+      console.error(`resizeImage: "${file}" does not contain a period "."`)
+      return { error: `resizeImage: "${file}" does not contain a period "."` }
+    }
+  } else {
+    console.error(`S3 GetObject: imageBuffer is null.`)
+    return { error: `S3 GetObject: imageBuffer is null.` }
+  }
+}
+
+export const convHeicToJpegAndSave = async (bucket: string, file: string) => {
+  const s3 = new AWS.S3({
+    signatureVersion: 'v4',
+    accessKeyId: process.env.access_key,
+    secretAccessKey: process.env.secret_access_key
+  })
+
+  console.log(JSON.stringify({
+    signatureVersion: 'v4',
+    accessKeyId: process.env.access_key,
+    secretAccessKey: process.env.secret_access_key
+  }))
+  const imageBuffer: GetObjectOutput = await s3.getObject({Bucket: bucket, Key: file}).promise()
+  if (imageBuffer && imageBuffer.Body) {
+    const outBuffer = await convertHeic(imageBuffer.Body as Buffer)
+    console.log('resizeImage(): outBuffer =')
+    console.log(outBuffer)
+
+    if (outBuffer) {
+      let tempFile = file.split(".")
+      tempFile[tempFile.length -1] = "jpeg"
+
+      const fileName = tempFile.join(".")
+      console.log(`convHeicToJpegAndSave(): new filename = ${fileName}`)
+
+      const writeParam = {
+        Bucket: bucket,
+        Body: outBuffer,
+        Key: fileName,
+        ContentType: 'image/jpeg'
+      }
+
+      const putResult = await s3.putObject(writeParam).promise()
+      if ((putResult as unknown as AWSError).code) {
+        console.error(`put error: ${(putResult as unknown as AWSError).message}`)
+      }
+
+      const deleteParam = {
+        Bucket: bucket,
+        Key: file
+      }
+      const deleteResult = await s3.deleteObject(deleteParam).promise()
+      if ((deleteResult as unknown as AWSError).code) {
+        console.error(`delete error: ${(deleteResult as unknown as AWSError).message}`)
+        return { error: (deleteResult as unknown as AWSError).message }
+      }
+      return deleteResult
+    } else {
+      console.error('outBuffer is empty: could not convert heic to jpeg')
+      return { error: 'outBuffer is empty: could not convert heic to jpeg' }
+    }
+  } else {
+    console.error(`S3 GetObject: imageBuffer is null.`)
+    return { error: `S3 GetObject: imageBuffer is null.` }
+  }
 }

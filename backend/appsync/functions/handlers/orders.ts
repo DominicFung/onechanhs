@@ -1,7 +1,7 @@
 import AWS = require('aws-sdk')
-import { AWSError } from 'aws-sdk'
 
 import dynamoService = require('../../utils/dynamo')
+const DynamoParser = AWS.DynamoDB.Converter.unmarshall
 
 export interface OrderInput {
   items: [OrderItemInput]
@@ -23,16 +23,39 @@ export interface OrderItemInput {
   additionalInstructions: string
 }
 
-export const createOrder = async (event: { arguments: any }): Promise<boolean> => {
+export interface Order {
+  orderId: string
+  address: string
+  postalCode: string
+  city: string
+  state: string
+  country: string
+
+  orderItems: OrderItem[]
+}
+
+export interface OrderItem {
+  orderId: string
+  orderItemId: string
+
+  itemId: string
+  text: string
+  size: string
+  orientation: string
+
+  additionalInstructions: string
+}
+
+export const createOrder = async (event: { arguments: any }): Promise<Order|{ error: string }> => {
   const { newOrder }: { newOrder: OrderInput } = event.arguments
   const { orderTable, orderItemsTable } = process.env
 
-  let result = await dynamoService.putOrder(orderTable, orderItemsTable, newOrder)
-  if ((result as unknown as AWSError).code) { 
-    console.error(result)
-    return false
+  const result = await dynamoService.putOrder(orderTable, orderItemsTable, newOrder)
+  if ((result as any).error) { 
+    return result as {error: string}
+  } else {
+    const order = DynamoParser(result as any)
+    console.log(`Order: ${JSON.stringify(order)}`)
+    return order as unknown as Order
   }
-
-  console.log(result)
-  return true
 }

@@ -16,7 +16,7 @@ export interface StoreItemInput {
 
 export interface StoreItem {
   itemId: string
-  byLink: string
+  linkId: string
 
   title: string
   description?: string
@@ -89,30 +89,37 @@ export const getStoreItemWithPic = async (event: { arguments: any }): Promise<an
 
       let pictures = await s3Service.list(bucket, `public/${item.itemId}/`) || []
       let firstThumb = null as string|null
+      
+      item.picKeys = []
       item.pictures = []
 
       for (let pic of pictures) {
         if (pic.Key?.includes(_THUMBNAIL)) {
           let url = await s3Service.getSignedUrl(bucket, pic.Key)
-          if (!firstThumb) firstThumb = url
+          if (!firstThumb) firstThumb = pic.Key.split(_THUMBNAIL).join(".")
           item.pictures.push(url)
+          item.picKeys.push(pic.Key.split(_THUMBNAIL).join("."))
         } else console.log(`listItems: ${pic.Key} doesnt include "${_THUMBNAIL}", skip.`)
       }
 
       if (firstThumb) {
-        let temp = firstThumb.split(_THUMBNAIL)
-        if (temp.length == 2) {
-          item.focusPictureUrl = temp[0]+"."+temp[1]
-        } else console.error(`firstThumb: ${firstThumb}, cannot be split into 2 using "${_THUMBNAIL}".`)
-      }
+        item.focusPictureUrl = await s3Service.getSignedUrl(bucket, firstThumb)
+      } else console.error(`firstThumb: ${firstThumb} doesnt exist!`)
 
-      if (!item.focusPictureUrl) item.focusPictureUrl = firstThumb
       return item
     } else return null
   } catch (e) {
     console.error(e)
     return { error: e.toString() }
   }
+}
+
+export const getHDImage = async (event: { arguments: any }): Promise<any> => {
+  const { bucket = _DefaultBucket } = process.env
+  const { key } = event.arguments
+
+  const url = await s3Service.getSignedUrl(bucket, key)
+  return { url }
 }
 
 export const getStoreItemWithThumb = async (event: { arguments: any }): Promise<any> => {
@@ -150,16 +157,17 @@ export const getStoreItemWithThumb = async (event: { arguments: any }): Promise<
   }
 }
 
-export const createItemFull = async (event: { arguments: any }): Promise<any> => {
+export const createItemFull = async (event: { arguments: any }): Promise<StoreItem|{error: string}> => {
   const { table } = process.env
   const { newItem }: { newItem: StoreItemInput } = event.arguments
-  const result = await dynamoService.createItem(table, newItem)
+  const result = await dynamoService.putItem(table, newItem)
 
-  if ((result as unknown as AWSError).code) { 
+  if ((result as { error: string }).error) { 
     console.error(result)
-    return false
+    return result as {error: string}
+  } else {
+    const storeItem = DynamoParser(result as any)
+    console.log(`StoreItem: ${JSON.stringify(storeItem)}`)
+    return storeItem as unknown as StoreItem
   }
-
-  console.log(result)
-  return true
 }
