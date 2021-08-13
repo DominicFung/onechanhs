@@ -16,6 +16,7 @@ import Home from './pages/home/Home'
 import Products from './pages/products/Products'
 import Item from './pages/item/Item'
 import Cart from './pages/cart/Cart'
+import EmptyCart from "./pages/cart/components/EmptyCart"
 
 // https://www.smashingmagazine.com/2020/02/tailwindcss-react-project/
 // https://tailwindcss.com/docs/configuration
@@ -60,17 +61,18 @@ function App() {
             <Item />
           </Route>
           <Route path="/cart">
-            <Cart />
+            <Cart page={page} />
           </Route>
           <Route path="/products">
             <Products page={page} />
           </Route>
           <Route path="/">
-            <Home />
+            <Home page={page} />
           </Route>
         </Switch>
-
         <Footer />
+
+        <EmptyCart page={page} />
       </div>
   )
 }

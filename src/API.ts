@@ -87,6 +87,7 @@ export type Order = {
 export type OrderItem = {
   __typename: "OrderItem",
   orderItemId: string,
+  itemId: string,
   purchasePrice: number,
   text?: string | null,
   size?: string | null,
@@ -305,6 +306,7 @@ export type GetOrderQuery = {
     orderItems?:  Array< {
       __typename: "OrderItem",
       orderItemId: string,
+      itemId: string,
       purchasePrice: number,
       text?: string | null,
       size?: string | null,

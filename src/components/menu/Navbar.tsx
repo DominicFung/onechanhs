@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import whiteLogo from '../../assets/Logo2.png'
 import greenLogo from '../../assets/LogoDarkWords.png'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart'
+import { getItemCount } from '../utils/LocalStorage'
+import EmptyCart from '../../pages/cart/components/EmptyCart'
 
 export interface NavProps {
   page: string
@@ -15,10 +17,19 @@ export default function Nav ({ page }: NavProps) {
   const [ isTop, setIsTop ] = React.useState(true)
   const [ useWhiteLogo, setUseWhiteLogo ] = React.useState(true)
 
+  const [ cartNum, setCartNum ] = React.useState(0)
+
   useEffect(() => {
     customSetScroll()
+    setCartNum( getItemCount() )
+    
     window.addEventListener('scroll', customSetScroll, true)
-    return window.removeEventListener('scroll', customSetScroll)
+    document.body.addEventListener('cartUpdate', cartListener)
+
+    return () => {
+      window.removeEventListener('scroll', customSetScroll)
+      document.body.removeEventListener('cartUpdate', cartListener)
+    }
   }, [])
 
   const _ISTOPLIMIT = 1
@@ -31,6 +42,12 @@ export default function Nav ({ page }: NavProps) {
     if (useWhiteLogo && window.scrollY > _WHITELOGOLIMIT) setUseWhiteLogo(false)
     else setUseWhiteLogo(true)
   }
+
+  const cartListener = (e: any) => {
+    console.log(`cartListener(): ${JSON.stringify(e)}`)
+    let num = e.detail.cartcount as number
+    setCartNum(num)
+  } 
 
   return (
     <nav className="w-full flex items-center justify-between flex-wrap bg-lightsage p-6 fixed z-40" style={{
@@ -70,12 +87,19 @@ export default function Nav ({ page }: NavProps) {
             <a href="#responsive-header" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${isTop?"hover:text-white":"hover:text-darkgreen"} mr-4`}>F.A.Q.</a>
             <a href="#responsive-header" className={`block mt-4 lg:inline-block lg:mt-0 text-black ${isTop?"hover:text-white":"hover:text-darkgreen"} mr-4`}>About</a>
             <div>
-              {/*<a href="#" className="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white hover:border-transparent hover:text-lightsage hover:bg-white mt-4 lg:mt-0">
-                Cart
-              </a>*/}
-              <Link className={`inline-block text-sm px-4 py-2 hover:text-black ${page==="Cart"?"font-bold text-black":"text-darkgreen" }`}
-                style={{transition: "color 0.8s cubic-bezier(0.4, 0, 0.2, 1)"}} to="/cart"
-              ><ShoppingCartIcon /></Link>
+              <span className="relative inline-block">
+                <Link className={`inline-block text-sm px-4 py-2 hover:text-black ${page==="Cart"?"font-bold text-black":"text-darkgreen" }`}
+                  style={{transition: "color 0.8s cubic-bezier(0.4, 0, 0.2, 1)"}} to="/cart"
+                >
+                  <ShoppingCartIcon />
+                  { cartNum > 0 ? 
+                    <span className="absolute top-2 right-4 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-gray-600 rounded-full"
+                      style={{fontSize: 10}}
+                    >{cartNum}</span> : null
+                  }
+                </Link>
+              </span>
+              
             </div>
           </div>
         </div>

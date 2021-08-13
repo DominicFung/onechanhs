@@ -115,6 +115,7 @@ export const getOrder = /* GraphQL */ `
       country
       orderItems {
         orderItemId
+        itemId
         purchasePrice
         text
         size

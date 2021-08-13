@@ -5,18 +5,18 @@ import { useParams } from 'react-router-dom'
 
 import ItemTab from './ItemTab'
 
-import { API, graphqlOperation } from 'aws-amplify'
-import { StoreItem, HdImageURL } from '../../API'
+import { API } from 'aws-amplify'
+import { StoreItem, HdImageURL, OrderItem } from '../../API'
+import { v4 } from 'uuid'
 
 //import { getStoreItemById } from '../../graphql/queries'
 import { getStoreItemWithPic, getHDImage } from '../../graphql/queries'
 import { GraphQLResult } from '@aws-amplify/api-graphql'
 
+import { getItems, storeItems } from '../../components/utils/LocalStorage'
 const _SIDE_PANNEL_ID = "item_side_pannel"
 
-interface StoreItemProps {
-  
-}
+interface StoreItemProps {}
 
 export default function Item(props: StoreItemProps){
 
@@ -37,7 +37,10 @@ export default function Item(props: StoreItemProps){
   const [ customTexts, setCustomTexts ] = React.useState<string[]>([""])
   const [ customInstructions, setCustomInstructions ] = React.useState<string[]>([""])
 
-  const getStoreItem = async (id: String) => { 
+  const [ isUpdateCart, setIsUpdateCart ] = React.useState(false)
+  const [ hasChanged, setHasChanged ] = React.useState(false)
+
+  const getStoreItem = async (id: string) => { 
     let si = await API.graphql({
       query: getStoreItemWithPic,
       variables: { itemId: id },
@@ -46,9 +49,48 @@ export default function Item(props: StoreItemProps){
 
     console.log(si.data?.getStoreItemWithPic)
     if (si.data?.getStoreItemWithPic) {
-      setStoreItem(si.data?.getStoreItemWithPic || null)
-      setFocusPictureUrl(si.data?.getStoreItemWithPic.focusPictureUrl || "")
+      const storeItem = si.data?.getStoreItemWithPic
+      setStoreItem(storeItem || null)
+      setFocusPictureUrl(storeItem.focusPictureUrl || "")
+    
+      const savedOrders = getItems(id)
+      const firstOrder = savedOrders.pop()
+
+      if (firstOrder) {
+        setIsUpdateCart(true)
+
+        let savedColor = firstOrder.color || ""
+        let savedColorIndex = storeItem.colors.indexOf(savedColor)
+        let tempColorChoices: number[] = [savedColorIndex && savedColorIndex > 0 ? savedColorIndex : 0]
+        let tempCustomText: string[] = [firstOrder.text || ""]
+        let tempCustomInstructions: string[] = [firstOrder.additionalInstructions || ""]
+
+        console.log(tempColorChoices)
+
+        for (let order of savedOrders) {
+          if (order.color) {
+            let i = storeItem?.colors.indexOf(order.color) || -1
+            tempColorChoices.push(i > 0 ? i : 0)
+          } 
+          else { tempColorChoices.push(0) }
+
+          if (order.text) { tempCustomText.push(order.text) }
+          else { tempCustomText.push("") }
+
+          if (order.additionalInstructions) { tempCustomInstructions.push(order.additionalInstructions) }
+          else { tempCustomInstructions.push("") }
+        }
+
+        setColorChoices(tempColorChoices)
+        setCustomTexts(tempCustomText)
+        setCustomInstructions(tempCustomInstructions)
+
+        setQuantityText(savedOrders.length+1 > 0 ? ""+(savedOrders.length+1) : "1")
+      } else { setIsUpdateCart(false) }
+      
     } else { console.error(`item ${id} does not exist.`) }
+
+    handleResize()
   }
 
   const getFocusPicture = async (picKey: string) => {
@@ -64,6 +106,24 @@ export default function Item(props: StoreItemProps){
     if (fp.data?.getHDImage?.url) { 
       setFocusPictureUrl(fp.data?.getHDImage.url)
     }
+  }
+
+  const addToCart = (si: StoreItem, cc: number[], ct: string[], ai: string[]) => {
+    let cartItems: OrderItem[] = []
+    for (let i=0; i<colorChoices.length; i++) {
+      cartItems.push({
+        orderItemId: `local-${v4()}`,
+        itemId: id,
+        purchasePrice: si.price,
+        color: si.colors[cc[i]],
+        text: ct[i],
+        additionalInstructions: ai[i],
+      } as OrderItem)
+    }
+
+    console.log(`storing cart items: ${JSON.stringify(cartItems)}`)
+    setIsUpdateCart(true)
+    storeItems(si.itemId, cartItems)
   }
 
   useEffect(() => {
@@ -82,7 +142,6 @@ export default function Item(props: StoreItemProps){
   const handleResize = () => {
     if (sidePannelRef.current) {
       let tempHeight = (sidePannelRef.current as any).clientHeight
-      console.log(tempHeight)
       if (tempHeight) setSidePannelHeight(tempHeight)
     }
   }
@@ -98,10 +157,7 @@ export default function Item(props: StoreItemProps){
     let i = parseInt(quantityText)
     if (i) { 
       setQuantity(i) 
-
-      if (tab >= i) { 
-        setTab(i-1)
-      }
+      if (tab >= i) { setTab(i-1) }
 
       let oldLen = colorChoices.length
       let dif = i - oldLen
@@ -110,16 +166,19 @@ export default function Item(props: StoreItemProps){
         for (let a=0; a<dif; a++) {
           colorChoices.push(0)
           customTexts.push("")
+          customInstructions.push("")
         }
       else if (dif < 0)
         for (let a=0; a>dif; a--) {
           colorChoices.pop()
           customTexts.pop()
+          customInstructions.pop()
         }
       else console.log("No change in i value. OK")
 
       setColorChoices(colorChoices)
       setCustomTexts(customTexts)
+      setCustomInstructions(customInstructions)
 
     } else { console.warn(`quanity is NAN: ${i}`) }
   }, [quantityText])
@@ -176,9 +235,13 @@ export default function Item(props: StoreItemProps){
               <h2 className="text-4xl">{storeItem?.title}</h2>
               <small className="italic text-xs" style={{fontSize: 10}}>Product id: {id}</small>
 
+              <div className="py-4 text-darkgreen">
+                <b>${storeItem?.price.toFixed(2)}</b> {storeItem?.currency}
+              </div>
+
               <p className="m-2 p-4 bg-gray-50 rounded">{storeItem?.description}</p>
               
-              <div className="flex flex-row">
+              <div className="flex flex-row pt-4">
                   <label htmlFor="custom-input-number" className="w-full text-gray-700 text-sm font-semibold pt-3.5">Quantity:</label>
                 
                 <div className="custom-number-input h-10 w-20">
@@ -205,12 +268,12 @@ export default function Item(props: StoreItemProps){
                     { colorChoices.map((v, i) => {
                       if (i === tab)
                         return (
-                          <li className="px-4 py-2 -mb-px font-semibold text-gray-800 border-b-2 border-blue-400 rounded-t opacity-50">
+                          <li key={i} className="px-4 py-2 -mb-px font-semibold text-gray-800 border-b-2 border-blue-400 rounded-t opacity-50">
                             <button onClick={() => { setTab(i) }}>{i+1}</button>
                           </li>)
                       else
                         return (
-                          <li className="px-4 py-2 font-semibold text-gray-800 rounded-t opacity-50">
+                          <li key={i} className="px-4 py-2 font-semibold text-gray-800 rounded-t opacity-50">
                             <button onClick={() => { setTab(i) }}>{i+1}</button>
                           </li>)
                     })}
@@ -220,7 +283,7 @@ export default function Item(props: StoreItemProps){
             </div>
             
             <div className="w-full p-2">
-              <form className="bg-white rounded pt-2" onSubmit={() => {}}>
+              <div className="bg-white rounded pt-2">
                 <div className="flex">
                   <label className="block text-gray-700 text-sm font-bold mb-1 mr-5 pt-1.5" htmlFor="username">
                     Colour:
@@ -248,8 +311,8 @@ export default function Item(props: StoreItemProps){
                   <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
                     Custom Text
                   </label>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" type="text" placeholder="Text" 
-                    value={customTexts[tab]} onChange={(e) => {
+                  <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="text" placeholder="Text" 
+                    value={customTexts[tab] || ""} onChange={(e) => {
                       customTexts[tab] = e.target.value
                       setCustomTexts([...customTexts])
                     }}
@@ -261,7 +324,7 @@ export default function Item(props: StoreItemProps){
                     Additional instructions
                   </label>
                   <textarea rows={5}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" placeholder="Instructions" 
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Instructions" 
                     value={customInstructions[tab]} onChange={(e) => {
                       customInstructions[tab] = e.target.value
                       setCustomInstructions([...customInstructions])
@@ -270,8 +333,15 @@ export default function Item(props: StoreItemProps){
                 </div>
 
                 <div className="w-full flex justify-center mb-4">
-                    <button className="bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 p-2 pr-8 pl-8 rounded">
-                      Add to cart{quantity === 1 ? "": ` (${quantity})`}
+                    <button className="bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 p-2 pr-8 pl-8 rounded"
+                      onClick={(e) => { 
+                        e.preventDefault()
+                        if (storeItem) {
+                          addToCart( storeItem, colorChoices, customTexts, customInstructions )
+                        } else console.log("NO STORE ITEM!")
+                      }}
+                    >
+                      {isUpdateCart ? "Update Cart":"Add to cart"}{quantity === 1 ? "": ` (${quantity})`}
                     </button>
                 </div>
                 <div className="w-full flex justify-center mb-4">
@@ -279,7 +349,7 @@ export default function Item(props: StoreItemProps){
                     Buy Now!
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
           

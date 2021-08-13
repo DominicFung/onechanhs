@@ -23,11 +23,9 @@ export default function StoreItem(props: StoreItemProps){
             /> */}
           </div>
           <div className="px-4 py-3 bg-white">
-            <a href="#" className="">
-              <h1 className="text-gray-800 font-semibold text-lg hover:text-red-500 transition duration-300 ease-in-out">
-                {props.title}
-              </h1>
-            </a>
+            <h1 className="text-gray-800 font-semibold text-lg hover:text-red-500 transition duration-300 ease-in-out">
+              {props.title}
+            </h1>
             <div className="flex py-2">
               <p className="mr-2 text-xs text-gray-600">${props.price} {props.currency}</p>
               { props.discount ?

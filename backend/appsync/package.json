@@ -16,7 +16,7 @@
     "aws-amplify-serverless-plugin": "^1.4.1",
     "heic-convert": "^1.2.4",
     "jimp": "^0.16.1",
-    "serverless": "^2.53.1",
+    "serverless": "^2.54.0",
     "serverless-appsync-plugin": "^1.11.3",
     "serverless-appsync-simulator": "^0.17.0",
     "serverless-dynamodb-local": "^0.2.40",

@@ -1,6 +1,7 @@
 
 
 import React, { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import polaroid from '../../assets/polaroid.png'
 
 //const defaultBackground = './assets/mainPhoto.jpg'
@@ -15,7 +16,11 @@ const polaroidPic2 = './assets/DSC_0076.jpg'
 // Note: actual = 441/539
 const polaroidInnerHxW = 500/430
 
-export default function Home () {
+export interface HomeProps {
+  page: string
+}
+
+export default function Home (props: HomeProps) {
 
   const [polaroidSizeH, setPolaroidSizeH] = React.useState(500)
   const [polaroidSizeW, setPolaroidSizeW] = React.useState(500)
@@ -23,10 +28,14 @@ export default function Home () {
   const [useLongHeight, setUseLongHeight] = React.useState(false)
 
   useEffect(() => {
-    updateDimensions()
-    window.addEventListener('resize', updateDimensions, true)
-    return window.removeEventListener('resize', updateDimensions)
-  }, [])
+    if (props.page === "Home") {
+      updateDimensions()
+      window.addEventListener('resize', updateDimensions, true)
+      return () => { 
+        window.removeEventListener('resize', updateDimensions)
+      }
+    }
+  }, [props.page])
 
   const updateDimensions = () => {
     let width = window.innerWidth
@@ -62,9 +71,9 @@ export default function Home () {
       <div className="w-full p-9 flex flex-col justify-center h-screen/5">
         <div className="p-3"><h4 className="text-3xl text-center">Shop our products</h4></div>
         <div className="flex flex-row justify-center">
-          <button className="bg-lightsage hover:bg-lightsage-dark text-white text-center py-2 px-4"
+          <Link to="/products"><button className="bg-lightsage hover:bg-lightsage-dark text-white text-center py-2 px-4"
             style={{transition: "background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)"}}
-          >Products</button>
+          >Products</button></Link>
         </div>
       </div>
       <div style={{padding: 50}} />

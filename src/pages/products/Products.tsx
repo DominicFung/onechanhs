@@ -49,36 +49,3 @@ export default function Products(props: ProductProps) {
     </div>
   </div>)
 }
-
-const _temp = [
-  {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random']
-  },
-  {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random']
-  },
-  {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random']
-  },
-  {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random']
-  },
-  {
-    id: "testtesttest",
-    title: "Custom Wedding Mug",
-    price: 45,
-    images: ['https://source.unsplash.com/random']
-  }
-]

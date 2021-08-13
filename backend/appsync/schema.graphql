@@ -19,7 +19,7 @@ type Mutation {
   createItem(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
   createItemFull(newItem: ItemInput): StoreItem! @aws_auth(cognito_groups: ["Admin"])
 
-  createOrder(newOrder: OrderInput): OrderOutput!
+  createOrder(newOrder: OrderInput): OrderOutput! @aws_iam @aws_cognito_user_pools
 }
 
 type StorePage @aws_iam @aws_cognito_user_pools {
@@ -118,7 +118,8 @@ type Order {
 
 type OrderItem {
   orderItemId: ID!
-
+  
+  itemId: ID!
   purchasePrice: Float!
 
   text: String
