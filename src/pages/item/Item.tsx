@@ -1,7 +1,7 @@
 
 import React from 'react'
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useHistory, useParams } from 'react-router-dom'
 
 import ItemTab from './ItemTab'
 
@@ -14,9 +14,12 @@ import { getStoreItemWithPic, getHDImage } from '../../graphql/queries'
 import { GraphQLResult } from '@aws-amplify/api-graphql'
 
 import { getItems, storeItems } from '../../components/utils/LocalStorage'
+import { setIntersepter } from '../../components/utils/Utils'
 const _SIDE_PANNEL_ID = "item_side_pannel"
 
-interface StoreItemProps {}
+interface StoreItemProps {
+  page: string
+}
 
 export default function Item(props: StoreItemProps){
 
@@ -37,8 +40,19 @@ export default function Item(props: StoreItemProps){
   const [ customTexts, setCustomTexts ] = React.useState<string[]>([""])
   const [ customInstructions, setCustomInstructions ] = React.useState<string[]>([""])
 
-  const [ isUpdateCart, setIsUpdateCart ] = React.useState(false)
-  const [ hasChanged, setHasChanged ] = React.useState(false)
+  const [ isUpdateCart, setIsUpdateCart ] = React.useState(false) // used for Update or Add to cart button
+  const [ hasChanged, setHasChanged ] = React.useState(false)     // used for prevent refresh
+  const history = useHistory()
+
+  // change detector
+  useEffect(() => {
+    if (props.page === "Item" && id && storeItem && hasChanged) {
+      console.log(`Item.tsx: change detected`)
+      setIntersepter(true)
+    } else {
+      setIntersepter(false)
+    }
+  }, [props.page, id, storeItem, hasChanged])
 
   const getStoreItem = async (id: string) => { 
     let si = await API.graphql({
@@ -124,6 +138,7 @@ export default function Item(props: StoreItemProps){
     console.log(`storing cart items: ${JSON.stringify(cartItems)}`)
     setIsUpdateCart(true)
     storeItems(si.itemId, cartItems)
+    setHasChanged(false)
   }
 
   useEffect(() => {
@@ -184,6 +199,7 @@ export default function Item(props: StoreItemProps){
   }, [quantityText])
 
   const incrementQuantity = () => {
+    setHasChanged(true)
     console.log("increment quantity")
     let i = parseInt(quantityText)
     if (i >= 1) { setQuantityText(""+(i+1)) }
@@ -191,6 +207,7 @@ export default function Item(props: StoreItemProps){
   }
 
   const decrementQuantity = () => {
+    setHasChanged(true)
     console.log("decrement quantity")
     let i = parseInt(quantityText)
     if (i > 1) { setQuantityText(""+(i-1)) }
@@ -296,7 +313,8 @@ export default function Item(props: StoreItemProps){
                             style={{backgroundColor: v||"", borderColor: colorChoices[tab]===i?v||"":""}}  
                             onClick={() => { 
                               colorChoices[tab] = i
-                              setColorChoices([...colorChoices]) 
+                              setColorChoices([...colorChoices])
+                              setHasChanged(true)
                             }}>
                             <span className={`rounded-full h-7 w-7 inline-flex items-center justify-center hover:border-gray-200 hover:border-2
                               ${ colorChoices[tab]===i ?  "border-2 border-white" : ""}`} />
@@ -315,6 +333,7 @@ export default function Item(props: StoreItemProps){
                     value={customTexts[tab] || ""} onChange={(e) => {
                       customTexts[tab] = e.target.value
                       setCustomTexts([...customTexts])
+                      setHasChanged(true)
                     }}
                   />
                 </div>
@@ -328,6 +347,7 @@ export default function Item(props: StoreItemProps){
                     value={customInstructions[tab]} onChange={(e) => {
                       customInstructions[tab] = e.target.value
                       setCustomInstructions([...customInstructions])
+                      setHasChanged(true)
                     }}
                   />
                 </div>
@@ -345,7 +365,15 @@ export default function Item(props: StoreItemProps){
                     </button>
                 </div>
                 <div className="w-full flex justify-center mb-4">
-                  <button className="bg-lightsage text-gray-600 hover:text-gray-300 hover:bg-darkgreen hover:font-bold p-2 pr-8 pl-8 rounded">
+                  <button className="bg-lightsage text-gray-600 hover:text-gray-300 hover:bg-darkgreen hover:font-bold p-2 pr-8 pl-8 rounded"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (storeItem) {
+                        addToCart( storeItem, colorChoices, customTexts, customInstructions )
+                        history.push('/cart')
+                      } else console.log("NO STORE ITEM!")
+                    }}
+                  >
                     Buy Now!
                   </button>
                 </div>

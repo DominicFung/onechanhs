@@ -52,11 +52,17 @@ export const createOrder = /* GraphQL */ `
   mutation CreateOrder($newOrder: OrderInput) {
     createOrder(newOrder: $newOrder) {
       orderId
-      address
-      postalCode
-      city
-      state
-      country
+      email
+      orderItems {
+        itemId
+        purchasePrice
+        text
+        size
+        color
+        orientation
+        additionalInstructions
+      }
+      totalPrice
     }
   }
 `;

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useHistory } from 'react-router-dom'
 
-import { OrderItem, StoreItem } from '../../API'
+import { OrderInput, OrderItem, OrderItemInput, OrderItemOutput, OrderOutput, StoreItem } from '../../API'
 import { clearItems, getAllItems } from '../../components/utils/LocalStorage'
 import { listItems } from '../../graphql/queries'
 
@@ -11,6 +11,7 @@ import { EditRounded } from '@material-ui/icons'
 
 import Invoice from '../invoice/Invoice'
 import { createOrder } from '../../graphql/mutations'
+import { validateEmail } from '../../components/utils/Utils'
 
 const AvailableLocations = [
   "Brampton, Ontario",
@@ -29,8 +30,9 @@ interface OrderItemWithQuantity extends OrderItem {
   quantity: number
 }
 
+const _BORDER_TRANSITION_CSS = "border-color 0.3s ease-in-out 0.3s"
+
 export default function Cart (props: CartProps) {
-  const [ isCheckedOut, setIsCheckedOut ] = React.useState(false)
 
   const [ storeMap, setStoreMap ] = React.useState<{[key: string]: StoreItem}>({})
   const [ originalItems, setOriginalItems ] = React.useState<OrderItem[]>([])
@@ -46,6 +48,38 @@ export default function Cart (props: CartProps) {
   const [ postal, setPostal ] = React.useState("")
 
   const [ email, setEmail] = React.useState("")
+
+  const [ highlightErrorLocation, setHightlightErrorLocation ] = React.useState<string[]>([])
+  const [ errorMessage, setErrorMessage ] = React.useState("")
+
+  const [invoice, setInvoice] = React.useState<OrderOutput|null>(null)
+  /*
+  {
+    "orderId": "5854dbde-f013-48da-9974-bf4c89b83e2f",
+    "email": "fung_dominic@hotmail.com",
+    "orderItems": [
+        {
+            "itemId": "efa4464a-a5f9-4361-8f42-3fd397f46bb5",
+            "purchasePrice": 15.25,
+            "text": "Lois",
+            "size": null,
+            "color": null,
+            "orientation": null,
+            "additionalInstructions": null
+        } as OrderItemOutput,
+        {
+            "itemId": "efa4464a-a5f9-4361-8f42-3fd397f46bb5",
+            "purchasePrice": 15.25,
+            "text": "Ariane",
+            "size": null,
+            "color": null,
+            "orientation": null,
+            "additionalInstructions": null
+        } as OrderItemOutput
+    ],
+    "totalPrice": 30.5
+  } as OrderOutput
+*/
 
   const shipMap = {
     "ship-10": 10, 
@@ -108,22 +142,92 @@ export default function Cart (props: CartProps) {
   }, [props.page])
 
   const submitOrder =  async (
-    items: OrderItem[], address: string, city: string, state: string, country: string
+    items: OrderItem[], email: string,
+    address: string, cityState: string, country: string, postal: string
   ) => {
+    setHightlightErrorLocation([""])
+    setErrorMessage("")
+    console.warn(items)
 
-    const subOrder = await API.graphql({
+    // check for empty cart.
+    if (items.length <= 0) {
+      console.warn(items)
+      setHightlightErrorLocation([""])
+      setErrorMessage("You don't have any items in your cart!")
+      return
+    }
+
+    // empty Email
+    if (!email || email === "") {
+      setHightlightErrorLocation(["email"])
+      setErrorMessage("We need an email to send you the reciept!")
+      return
+    }
+
+    // email is not the correct format.
+    if (!validateEmail(email)) {
+      setHightlightErrorLocation(["email"])
+      setErrorMessage("Please make sure this is a valid email.")
+      return
+    }
+
+    // check address filled
+    if (
+      !address || address === "" || !cityState || cityState === "" || 
+      !country || country === "" || !postal || postal === ""
+    ) {
+      const highlight = []
+      setErrorMessage("Please make you fill in your address.")
+      
+      if (!address || address === "") highlight.push("address")
+      if (!cityState || cityState === "") highlight.push("citystate")
+      if (!country || country === "") highlight.push("country")
+      if (!postal || postal === "") highlight.push("postal")
+      setHightlightErrorLocation(highlight)
+    }
+
+    const city = cityState.split(", ")[0]
+    const state = cityState.split(", ")[1]
+
+    let tempItems = []
+
+    for (let item of items) {
+      tempItems.push({
+        itemId: item.itemId,
+        text: item.text,
+        size: item.size,
+        color: item.color,
+        orientation: item.orientation,
+        additionalInstructions: item.additionalInstructions
+      } as OrderItemInput)
+    }
+
+    const invoice = await API.graphql({
         query: createOrder,
         variables: {
-          items, address, city, state, country
+          newOrder: {
+            items: tempItems, email,
+            address, city, state, country, 
+            postalCode: postal
+          } as OrderInput
         },
         authMode: GRAPHQL_AUTH_MODE.AWS_IAM
-    }) as GraphQLResult
+    }) as GraphQLResult<{createOrder: OrderOutput}>
+
+    if (invoice.data?.createOrder){
+      console.log(invoice.data?.createOrder)
+      setInvoice(invoice.data?.createOrder)
+      clearItems()
+    } else {
+      console.error("Could not create invoice")
+      console.error(invoice.errors)
+    }
   }
 
   return (
     <div className="w-full p-4 pt-32 flex justify-center pb-24">
 
-      { isCheckedOut ? <Invoice /> : 
+      { invoice ? <Invoice invoice={invoice! as OrderOutput} address={`${address} ${citystate} ${country}. ${postal}`} /> : 
         <div className="container mx-xl mt-10">
           <div className="grid grid-cols-6 space-x-8">
 
@@ -201,6 +305,10 @@ export default function Cart (props: CartProps) {
                   <label htmlFor="email" className="font-semibold inline-block mb-3 text-sm uppercase">Email</label>
                   <input type="text" id="email" placeholder="Email" className="p-2 text-sm w-full outline-black" 
                     value={email} onChange={(e) => setEmail(e.target.value)}
+                    style={{ 
+                      border: (highlightErrorLocation.includes("email") ? "red":"white")+" solid 1px", 
+                      transition: _BORDER_TRANSITION_CSS
+                    }}
                   />
                 </div>
               <div className="py-4">
@@ -209,12 +317,20 @@ export default function Cart (props: CartProps) {
                   <label htmlFor="address" className="font-semibold inline-block mb-3 text-sm uppercase">Address</label>
                   <input type="text" id="address" placeholder="Address" className="p-2 text-sm w-full outline-black"
                     value={address} onChange={(e) => setAddress(e.target.value) }
+                    style={{ 
+                      border: (highlightErrorLocation.includes("address") ? "red":"white")+" solid 1px", 
+                      transition: _BORDER_TRANSITION_CSS
+                    }}
                   />
                 </div>
                 <div className="py-2">
                   <label htmlFor="city" className="font-semibold inline-block mb-3 text-sm uppercase">City &amp; Province/State</label>
                   <select id="city" placeholder="City &amp; Province/State" className="p-2 text-sm w-full outline-black"
                     value={citystate} onChange={(e) => setCityState(e.target.value) }
+                    style={{ 
+                      border: (highlightErrorLocation.includes("citystate") ? "red":"white")+" solid 1px", 
+                      transition: _BORDER_TRANSITION_CSS
+                    }}
                   >
                     <option value="default" className="gray-200">Please Choose .. </option>
                     {AvailableLocations.map((l, i) => {
@@ -226,22 +342,33 @@ export default function Cart (props: CartProps) {
                   <label htmlFor="country" className="font-semibold inline-block mb-3 text-sm uppercase">Country</label>
                   <input type="text" id="country" placeholder="Country" className="p-2 text-sm w-full outline-black" 
                     value={country} disabled onChange={() => {}}
+                    style={{ 
+                      border: (highlightErrorLocation.includes("country") ? "red":"white")+" solid 1px", 
+                      transition: _BORDER_TRANSITION_CSS
+                    }}
                   />
                 </div>
                 <div className="py-2">
                   <label htmlFor="postal" className="font-semibold inline-block mb-3 text-sm uppercase">Postal Code</label>
                   <input type="text" id="postal" placeholder="Postal Code" className="p-2 text-sm w-full outline-black" 
                     value={postal} onChange={(e) => { setPostal(e.target.value) }}
+                    style={{ 
+                      border: (highlightErrorLocation.includes("postal") ? "red":"white")+" solid 1px", 
+                      transition: _BORDER_TRANSITION_CSS
+                    }}
                   />
                 </div>
               </div>
-              <div className="border-t mt-8">
+              <div className="mt-4 h-4 text-red-500" style={{fontSize: 10}}>
+                {errorMessage}
+              </div>
+              <div className="border-t mt-0">
                 <div className="flex font-semibold justify-between py-6 text-sm uppercase">
                   <span>Total cost</span>
                   <span>${totalPrice.toFixed(2)}</span>
                 </div>
                 <button className="bg-lightsage font-semibold hover:bg-darkgreen py-3 text-sm text-white uppercase w-full"
-                  onClick={() => { setIsCheckedOut(true) }}
+                  onClick={() => { submitOrder(originalItems, email, address, citystate, country, postal) }}
                 >Checkout</button>
               </div>
             </div>

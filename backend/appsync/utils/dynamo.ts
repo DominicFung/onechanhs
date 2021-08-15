@@ -4,8 +4,8 @@ import { PromiseResult } from 'aws-sdk/lib/request'
 import { v4 } from 'uuid'
 
 import { QueryOutput, PutItemOutput } from 'aws-sdk/clients/dynamodb'
-import { OrderInput } from '../functions/handlers/orders'
-import { StoreItemInput } from '../functions/handlers/storeItems'
+import { Order, OrderInput, OrderItem, OrderItemInput } from '../functions/handlers/orders'
+import { StoreItem, StoreItemInput } from '../functions/handlers/storeItems'
 
 const REGION = 'ca-central-1'
 const DynamoParser = AWS.DynamoDB.Converter.unmarshall
@@ -35,71 +35,123 @@ export const queryStoreItemById = async (table: string = "storeItem", id: string
   return result
 }
 
+export interface ItemPriceMap {
+  [itemId: string]: number
+}
+
+export const checkStorePrices = async (
+  storeTable: string = "storeItem",
+  ordItemInputList: OrderItemInput[]
+): Promise<ItemPriceMap|null> => {
+  const priceMap: ItemPriceMap = {}
+  
+  for (let oii of ordItemInputList) {
+    if (!priceMap[oii.itemId]) {
+      const { Items } = await queryStoreItemById(storeTable, oii.itemId)
+      if (Items && Items.length == 1){
+        let item = DynamoParser(Items[0]) as StoreItem
+        priceMap[oii.itemId] = item.price
+      } else {
+        console.error(`checkStorePrices: ItemId not found! ${oii.itemId}. returning null.`)
+        console.error(`checkStorePrices: Maybe the item was deleted before the user could buy?`)
+        return null
+      }
+    } else {
+      console.log(`checkStorePrices: map already includes ItemId ${oii.itemId}, continue ..`)
+    }
+  }
+  
+  return priceMap
+}
+
 export const putOrder = async (
+  storeTable: string = "storeItem",
   orderTable: string = "order", 
   orderItemsTable: string = "orderItem", 
   payload: OrderInput
-) => {
-  const dynamodb = new AWS.DynamoDB({region: REGION })
-  const orderId = v4()
+): Promise<{
+  order: any, orderItems: any[] // These are in dynamoDB format
+}|{ error: string }> => {
+  const priceMap = await checkStorePrices(storeTable, payload.items)
+  if (priceMap) {
+    const dynamodb = new AWS.DynamoDB({region: REGION })
+    const orderId = v4()
 
-  let order = {
-    'orderId':     { S: orderId },
-    'address':     { S: payload.address },
-    'postalCode':  { S: payload.postalCode },
-    'city':        { S: payload.city },
-    'state':       { S: payload.state },
-    'country':     { S: payload.country }
-  }
+    if (!payload.email) return { error: `email is empty!` }
 
-  const params = {
-    TableName: orderTable, Item: order
-  }
+    let order = {
+      'orderId':     { S: orderId },
+      'email':       { S: payload.email }
+    }
 
-  let promises: Promise<PromiseResult<PutItemOutput, AWSError>>[] = []
-  let tempOrderItems: any[] = []
-  order['orderItems'] = { L: [] }
+    if ( payload.address )    order['address']    = { S: payload.address }
+    if ( payload.postalCode ) order['postalCode'] = { S: payload.postalCode }
+    if ( payload.city )       order['city']       = { S: payload.city }
+    if ( payload.state )      order['state']      = { S: payload.state }
+    if ( payload.country )    order['country']    = { S: payload.country }
 
-  for (let oi of payload.items) {
-    let orderItem = {
-      'orderId':      { S: orderId },
-      'orderItemId':  { S: v4() },
+    const tempOrders = order
+    const params = {
+      TableName: orderTable, Item: order
+    }
+
+    let promises: Promise<PromiseResult<PutItemOutput, AWSError>>[] = []
+    const tempOrderItems: any[] = []
+    order['orderItems'] = { L: [] }
+
+    for (let oi of payload.items) {
+      if (!oi.itemId) return { error: `orderItem is missing an itemId reference` }
+      let orderItem = {
+        'orderId':       { S: orderId },
+        'orderItemId':   { S: v4() },
+        'purchasePrice': { N: priceMap[oi.itemId].toFixed(2) },
+        'itemId':        { S: oi.itemId }
+      }
+
+      if ( oi.text )        orderItem['text']         = { S: oi.text }
+      if ( oi.color )       orderItem['size']         = { S: oi.color }
+      if ( oi.orientation ) orderItem['orientation']  = { S: oi.orientation }
       
-      'itemId':       { S: oi.itemId },
-      'text':         { S: oi.text },
-      'size':         { S: oi.color },
-      'orientation':  { S: oi.orientation },
+      if (oi.additionalInstructions) orderItem['additionalInstructions'] = { S: oi.additionalInstructions }
 
-      'additionalInstructions': { S: oi.additionalInstructions }
+      const orderItemParams = {
+        TableName: orderItemsTable,
+        Item: orderItem
+      }
+
+      tempOrderItems.push(orderItem)
+      promises.push(dynamodb.putItem(orderItemParams).promise())
     }
 
-    const orderItemParams = {
-      TableName: orderItemsTable,
-      Item: orderItem
+    let orderItemsResult = await Promise.all(promises)
+    console.log("order results: ")
+    console.log(JSON.stringify(orderItemsResult))
+
+    console.log("temp order items:")
+    console.log(tempOrderItems)
+
+    for (let i=0; i<orderItemsResult.length; i++) {
+      if (!(orderItemsResult[i][1])) {
+        // This is not an error. Push to Orders for return.
+        order['orderItems'].L.push(tempOrderItems[i].orderItemId )
+      }
     }
 
-    tempOrderItems.push(orderItem)
-    promises.push(dynamodb.putItem(orderItemParams).promise())
-  }
-
-  let orderItemsResult = await Promise.all(promises)
-  console.log(JSON.stringify(orderItemsResult))
-
-  for (let i=0; i<orderItemsResult.length; i++) {
-    if (!(orderItemsResult[i][1])) {
-      // This is not an error. Push to Orders for return.
-      order['orderItems'].L.push(tempOrderItems[i])
+    console.log("params for putItme :: order table")
+    console.log(JSON.stringify(params))
+    const result = await dynamodb.putItem(params).promise()
+    if ((result as unknown as AWSError).code) {
+      console.error(result)
+      return { error: (result as unknown as AWSError).message }
+    } else {
+      console.log(`putOrder: Returning full obj.`)
+      console.log(tempOrderItems)
+      console.log(tempOrderItems)
+      return { order: tempOrders, orderItems: tempOrderItems }
     }
-  }
-
-  console.log(JSON.stringify(params))
-  const result = await dynamodb.putItem(params).promise()
-  if ((result as unknown as AWSError).code) {
-    console.error(result)
-    return { error: (result as unknown as AWSError).message }
   } else {
-    console.log(`putOrder: Returning full obj.`)
-    return order
+    console.error(`putOrder: Some itemIds in OrderItems does not exist in out DB.`)
+    return { error: 'Some itemIds in OrderItems does not exist in out DB. Were those orders deleted?' }
   }
 }
 

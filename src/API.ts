@@ -31,11 +31,12 @@ export type StoreItem = {
 
 export type OrderInput = {
   items?: Array< OrderItemInput | null > | null,
-  address: string,
-  postalCode: string,
-  city: string,
+  email: string,
+  address?: string | null,
+  postalCode?: string | null,
+  city?: string | null,
   state?: string | null,
-  country: string,
+  country?: string | null,
 };
 
 export type OrderItemInput = {
@@ -50,11 +51,20 @@ export type OrderItemInput = {
 export type OrderOutput = {
   __typename: "OrderOutput",
   orderId: string,
-  address: string,
-  postalCode: string,
-  city: string,
-  state?: string | null,
-  country: string,
+  email: string,
+  orderItems?:  Array<OrderItemOutput | null > | null,
+  totalPrice: number,
+};
+
+export type OrderItemOutput = {
+  __typename: "OrderItemOutput",
+  itemId: string,
+  purchasePrice: number,
+  text?: string | null,
+  size?: string | null,
+  color?: string | null,
+  orientation?: string | null,
+  additionalInstructions?: string | null,
 };
 
 export type StorePage = {
@@ -71,11 +81,12 @@ export type HdImageURL = {
 export type Order = {
   __typename: "Order",
   orderId: string,
-  address: string,
-  postalCode: string,
-  city: string,
+  email: string,
+  address?: string | null,
+  postalCode?: string | null,
+  city?: string | null,
   state?: string | null,
-  country: string,
+  country?: string | null,
   orderItems?:  Array<OrderItem | null > | null,
   discount?: number | null,
   discountCodeUsed?: string | null,
@@ -158,11 +169,18 @@ export type CreateOrderMutation = {
   createOrder:  {
     __typename: "OrderOutput",
     orderId: string,
-    address: string,
-    postalCode: string,
-    city: string,
-    state?: string | null,
-    country: string,
+    email: string,
+    orderItems?:  Array< {
+      __typename: "OrderItemOutput",
+      itemId: string,
+      purchasePrice: number,
+      text?: string | null,
+      size?: string | null,
+      color?: string | null,
+      orientation?: string | null,
+      additionalInstructions?: string | null,
+    } | null > | null,
+    totalPrice: number,
   },
 };
 
@@ -298,11 +316,12 @@ export type GetOrderQuery = {
   getOrder:  {
     __typename: "Order",
     orderId: string,
-    address: string,
-    postalCode: string,
-    city: string,
+    email: string,
+    address?: string | null,
+    postalCode?: string | null,
+    city?: string | null,
     state?: string | null,
-    country: string,
+    country?: string | null,
     orderItems?:  Array< {
       __typename: "OrderItem",
       orderItemId: string,

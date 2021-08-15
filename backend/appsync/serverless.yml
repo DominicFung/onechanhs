@@ -95,6 +95,7 @@ functions:
     environment:
       orderTable: '${self:custom.orderTableName}'
       orderItemsTable: '${self:custom.orderItemTableName}'
+      storeTable: '${self:custom.storeItemTableName}'
 
   create-item-full:
     handler: functions/handlers/storeItems.createItemFull

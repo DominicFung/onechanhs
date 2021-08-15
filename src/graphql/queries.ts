@@ -108,6 +108,7 @@ export const getOrder = /* GraphQL */ `
   query GetOrder($orderId: String!) {
     getOrder(orderId: $orderId) {
       orderId
+      email
       address
       postalCode
       city

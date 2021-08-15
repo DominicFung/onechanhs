@@ -43,6 +43,11 @@ function App() {
     if (location) {
       console.log(location)
       let url = location.pathname
+
+      if (url.startsWith('/products/')) {
+        setPage('Item'); return
+      }
+
       switch(url) {
         case '/': setPage('Home'); break;
         case '/products': setPage('Products'); break;
@@ -58,7 +63,7 @@ function App() {
         
         <Switch>
           <Route path="/products/:id">
-            <Item />
+            <Item page={page} />
           </Route>
           <Route path="/cart">
             <Cart page={page} />
