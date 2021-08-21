@@ -82,33 +82,33 @@ order:
 #    Amazon SES Reputation Dashboard
 #    Sending Pause for 198,626 more emails. Complaint Rate 1.04%
 
-# cognitoUserPool:
-#   Type: AWS::Cognito::UserPool
-#   Properties:
-#     EmailConfiguration:
-#       EmailSendingAccount: DEVELOPER
-#       ReplyToEmailAddress: info@onechanhs.ca
-#       From: info@onechanhs.ca
-#       SourceArn: arn:aws:ses:us-east-1:${aws:accountId}:identity/onechanhs.ca #006033392195
-#     UsernameAttributes:
-#       - email
-#     UserPoolName: "OneChanhsUsers"
-#     AdminCreateUserConfig:
-#       AllowAdminCreateUserOnly: true
-#       InviteMessageTemplate:
-#         EmailMessage: "Hi {username}! Your temp password is the following: {####} ."
-#         EmailSubject: "Welcome to One Chanhs!"
-#     VerificationMessageTemplate:
-#       DefaultEmailOption: "CONFIRM_WITH_CODE"
-#       EmailSubject: "One Chanhs Confirmation Code"
-#       EmailMessage: "Hi there! Heres your confirmation code: {####}"
-
 cognitoUserPool:
   Type: AWS::Cognito::UserPool
   Properties:
+    EmailConfiguration:
+      EmailSendingAccount: DEVELOPER
+      ReplyToEmailAddress: info@onechanhs.ca
+      From: info@onechanhs.ca
+      SourceArn: arn:aws:ses:us-west-2:${aws:accountId}:identity/onechanhs.ca #006033392195
     UsernameAttributes:
       - email
     UserPoolName: "OneChanhsUsers"
+    AdminCreateUserConfig:
+      AllowAdminCreateUserOnly: true
+      InviteMessageTemplate:
+        EmailMessage: "Hi {username}! Your temp password is the following: {####} ."
+        EmailSubject: "Welcome to One Chanhs!"
+    VerificationMessageTemplate:
+      DefaultEmailOption: "CONFIRM_WITH_CODE"
+      EmailSubject: "One Chanhs Confirmation Code"
+      EmailMessage: "Hi there! Heres your confirmation code: {####}"
+
+# cognitoUserPool:
+#   Type: AWS::Cognito::UserPool
+#   Properties:
+#     UsernameAttributes:
+#       - email
+#     UserPoolName: "OneChanhsUsers"
 
 cognitoUserPoolClient:
   Type: AWS::Cognito::UserPoolClient

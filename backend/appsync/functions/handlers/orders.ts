@@ -1,6 +1,7 @@
 import AWS = require('aws-sdk')
 
 import dynamoService = require('../../utils/dynamo')
+import sesService = require('../../utils/ses')
 const DynamoParser = AWS.DynamoDB.Converter.unmarshall
 
 export interface OrderInput {
@@ -83,6 +84,10 @@ export const createOrder = async (event: { arguments: any }): Promise<OrderOutpu
     
     order.orderItems = orderItems
     console.log(`Order: ${JSON.stringify(order)}`)
+
+    const emailResult = await sesService.sendOrderEmail([], order)
+    console.log(emailResult)
+
     return order
   }
 }

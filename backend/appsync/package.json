@@ -23,6 +23,7 @@
     "serverless-offline": "^8.0.0",
     "serverless-plugin-common-excludes": "^4.0.0",
     "serverless-plugin-include-dependencies": "^5.0.0",
+    "square": "^13.1.0",
     "uuid": "^3.3.2"
   }
 }

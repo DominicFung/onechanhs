@@ -15,7 +15,9 @@ import { GraphQLResult } from '@aws-amplify/api-graphql'
 
 import { getItems, storeItems } from '../../components/utils/LocalStorage'
 import { setIntersepter } from '../../components/utils/Utils'
+
 const _SIDE_PANNEL_ID = "item_side_pannel"
+const defaultBackground = './assets/IMG_1598_jpg_2.jpg'
 
 interface StoreItemProps {
   page: string
@@ -236,7 +238,7 @@ export default function Item(props: StoreItemProps){
                 </div>
               </div>
               <div className="w-full col-span-5 h-full">
-                <div style={{backgroundImage: `url(${focusPictureUrl}), url(${storeItem?.pictures ? storeItem?.pictures[pictureIndex] : ""})`, backgroundColor: "#afc4c0"}}
+                <div style={{backgroundImage: `url(${focusPictureUrl}), url(${storeItem?.pictures ? storeItem?.pictures[pictureIndex] : defaultBackground})`, backgroundColor: "#afc4c0"}}
                   className="w-full h-full bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60"
                 />
               </div>

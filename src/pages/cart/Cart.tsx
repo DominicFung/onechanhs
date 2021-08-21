@@ -13,6 +13,7 @@ import Invoice from '../invoice/Invoice'
 import { createOrder } from '../../graphql/mutations'
 import { validateEmail } from '../../components/utils/Utils'
 
+const defaultBackground = './assets/IMG_1598_jpg_2.jpg'
 const AvailableLocations = [
   "Brampton, Ontario",
   "Etobicoke, Ontario",
@@ -251,7 +252,7 @@ export default function Cart (props: CartProps) {
                     <div key={i} className="flex items-center hover:bg-gray-100 mx-8 px-1 py-2">
                       <div className="flex w-2/5"> 
                         <div className="w-20 h-20 bg-cover bg-center transition duration-700 ease-in-out group-hover:opacity-60" 
-                          style={{backgroundImage: `url(${storeMap[v.itemId]? storeMap[v.itemId].pictures![0] : "https://klbtheme.com/shopwise/fashion/wp-content/uploads/2020/04/product_img10-1.jpg"}`}} 
+                          style={{backgroundImage: `url(${storeMap[v.itemId]? storeMap[v.itemId].pictures![0] : defaultBackground}`}} 
                         />
                         <div className="flex flex-col justify-between ml-4 flex-grow">
                           <span className="font-bold text-sm">{storeMap[v.itemId]? storeMap[v.itemId].title : "Item"}</span>
