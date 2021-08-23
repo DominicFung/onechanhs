@@ -37,6 +37,9 @@ export type OrderInput = {
   city?: string | null,
   state?: string | null,
   country?: string | null,
+  shipmentChoice?: string | null,
+  paymentPlatform?: string | null,
+  paymentData?: string | null,
 };
 
 export type OrderItemInput = {
@@ -90,9 +93,15 @@ export type Order = {
   orderItems?:  Array<OrderItem | null > | null,
   discount?: number | null,
   discountCodeUsed?: string | null,
+  shipmentChoice?: string | null,
+  shipmentPrice?: number | null,
   isFulfilled?: boolean | null,
-  fulfilledDate?: string | null,
-  dateOrdered?: string | null,
+  fulfilledDate?: number | null,
+  dateOrdered?: number | null,
+  isPaymentProcessed?: boolean | null,
+  paymentPlatform?: string | null,
+  paymentData?: string | null,
+  totalPrice?: number | null,
 };
 
 export type OrderItem = {
@@ -335,8 +344,14 @@ export type GetOrderQuery = {
     } | null > | null,
     discount?: number | null,
     discountCodeUsed?: string | null,
+    shipmentChoice?: string | null,
+    shipmentPrice?: number | null,
     isFulfilled?: boolean | null,
-    fulfilledDate?: string | null,
-    dateOrdered?: string | null,
+    fulfilledDate?: number | null,
+    dateOrdered?: number | null,
+    isPaymentProcessed?: boolean | null,
+    paymentPlatform?: string | null,
+    paymentData?: string | null,
+    totalPrice?: number | null,
   },
 };

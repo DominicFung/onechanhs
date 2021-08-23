@@ -10,6 +10,7 @@ import { GraphQLResult, GRAPHQL_AUTH_MODE } from '@aws-amplify/api-graphql'
 import { EditRounded } from '@material-ui/icons'
 
 import Invoice from '../invoice/Invoice'
+import Payment from '../payment/Payment'
 import { createOrder } from '../../graphql/mutations'
 import { validateEmail } from '../../components/utils/Utils'
 
@@ -228,7 +229,7 @@ export default function Cart (props: CartProps) {
   return (
     <div className="w-full p-4 pt-32 flex justify-center pb-24">
 
-      { invoice ? <Invoice invoice={invoice! as OrderOutput} address={`${address} ${citystate} ${country}. ${postal}`} /> : 
+      {/* invoice ? <Invoice invoice={invoice! as OrderOutput} address={`${address} ${citystate} ${country}. ${postal}`} /> : 
         <div className="container mx-xl mt-10">
           <div className="grid grid-cols-6 space-x-8">
 
@@ -246,7 +247,6 @@ export default function Cart (props: CartProps) {
               </div>
             </div>
 
-              {/* Product */}
               { orderItems.map((v, i) => {
                   return (
                     <div key={i} className="flex items-center hover:bg-gray-100 mx-8 px-1 py-2">
@@ -376,9 +376,9 @@ export default function Cart (props: CartProps) {
 
 
           </div>
-        </div> }
+        </div> */}
 
-        
+        <Payment page={props.page} email={email} />
     </div>
   )
 }

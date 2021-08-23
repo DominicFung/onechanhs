@@ -66,6 +66,10 @@ input OrderInput {
   city: String
   state: String
   country: String
+
+  shipmentChoice: String
+  paymentPlatform: String
+  paymentData: String
 }
 
 input OrderItemInput {
@@ -122,10 +126,18 @@ type Order {
   discount: Float
   discountCodeUsed: String
 
+  shipmentChoice: String
+  shipmentPrice: Float  # based on location / mapped in code
+
   isFulfilled: Boolean
-  fulfilledDate: AWSDateTime
+  fulfilledDate: Int # AWSDateTime
   
-  dateOrdered: AWSDateTime
+  dateOrdered: Int   # AWSDateTime
+
+  isPaymentProcessed: Boolean
+  paymentPlatform: String  # SQUARE 
+  paymentData: String
+  totalPrice: Float
 }
 
 type OrderItem {

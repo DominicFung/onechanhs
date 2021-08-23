@@ -4,8 +4,10 @@ import { PromiseResult } from 'aws-sdk/lib/request'
 import { v4 } from 'uuid'
 
 import { QueryOutput, PutItemOutput } from 'aws-sdk/clients/dynamodb'
-import { Order, OrderInput, OrderItem, OrderItemInput } from '../functions/handlers/orders'
+import { Order, OrderInput, OrderItem, OrderItemInput, OrderOutputStep1, OrderOutputStep2, ShippingLocations, ShippingOptions } from '../functions/handlers/orders'
 import { StoreItem, StoreItemInput } from '../functions/handlers/storeItems'
+
+import Square = require('square')
 
 const REGION = 'ca-central-1'
 const DynamoParser = AWS.DynamoDB.Converter.unmarshall
@@ -64,6 +66,13 @@ export const checkStorePrices = async (
   return priceMap
 }
 
+/**
+ * We're only writing down location, email and each order items here.
+ * Unaccounted for:
+ *    - payment details (please see writePayment)
+ * 
+ * "isPaymentProcessed" - is used to confirm payment in the next step.
+ */
 export const putOrder = async (
   storeTable: string = "storeItem",
   orderTable: string = "order", 
@@ -80,8 +89,9 @@ export const putOrder = async (
     if (!payload.email) return { error: `email is empty!` }
 
     let order = {
-      'orderId':     { S: orderId },
-      'email':       { S: payload.email }
+      'orderId':            { S: orderId },
+      'email':              { S: payload.email },
+      'isPaymentProcessed': { BOOL: false }
     }
 
     if ( payload.address )    order['address']    = { S: payload.address }
@@ -146,12 +156,69 @@ export const putOrder = async (
     } else {
       console.log(`putOrder: Returning full obj.`)
       console.log(tempOrderItems)
-      console.log(tempOrderItems)
       return { order: tempOrders, orderItems: tempOrderItems }
     }
   } else {
     console.error(`putOrder: Some itemIds in OrderItems does not exist in out DB.`)
     return { error: 'Some itemIds in OrderItems does not exist in out DB. Were those orders deleted?' }
+  }
+}
+
+export const writePayment = async (
+  order: OrderOutputStep1,
+  table: string = "order", 
+  shipmentChoice: ShippingOptions,
+  shipmentPrice: number,
+
+  paymentPlatform: string,
+  paymentData: Square.CreatePaymentResponse,
+  totalPrice: number
+): Promise<{order: any}|{ error: string }> => {
+  const dynamodb = new AWS.DynamoDB({region: REGION })
+  const dateOrdered = Date.now()
+
+  let params = {
+    TableName: table,
+    Key: { "orderId": { "S": order.orderId} },
+    UpdateExpression: `
+      SET shipmentChoice = :shipmentChoice, 
+          shipmentPrice = :shipmentPrice,
+          
+          isPaymentProcessed = :isPaymentProcessed,
+          paymentPlatform = :paymentPlatform,
+          paymentData = :paymentData,
+          
+          totalPrice = :totalPrice,
+          dateOrdered = :dateOrdered`,
+    ExpressionAttributeValues: {
+      ":shipmentChoice":      { S: shipmentChoice },
+      ":shipmentPrice":       { N: shipmentPrice.toFixed(2) },
+      ":isPaymentProcessed":  { BOOL: true },
+      ":paymentPlatform":     { S: paymentPlatform },
+      ":paymentData":         { S: JSON.stringify(paymentData) },
+      ":totalPrice":          { N: totalPrice.toFixed(2) },
+      ":dateOrdered":         { N: ""+dateOrdered }
+    }
+  }
+
+  const orderStep2 = { 
+    ...order, 
+    shipmentChoice, 
+    shipmentPrice,
+    paymentPlatform,
+    totalPrice,
+    dateOrdered
+  } as OrderOutputStep2
+
+  
+  console.log(JSON.stringify(params))
+  const result = await dynamodb.updateItem(params).promise()
+  if ((result as unknown as AWSError).code) {
+    console.error(result)
+    return { error: (result as unknown as AWSError).message }
+  } else {
+    console.log()
+    return { order: orderStep2 }
   }
 }
 

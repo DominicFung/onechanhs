@@ -1,9 +1,8 @@
 import AWS = require('aws-sdk')
-import { OrderOutput } from '../functions/handlers/orders'
+import { OrderOutputStep1 } from '../functions/handlers/orders'
 import { SendEmailRequest } from 'aws-sdk/clients/sesv2'
 
-""
-export const sendOrderEmail = async (to: string[], order: OrderOutput, from: string = "\"Lois\" <info@onechanhs.ca>", cc: string[] = ["info@onechanhs.ca"], region: string = "us-west-2") => {
+export const sendOrderEmail = async (to: string[], order: OrderOutputStep1, from: string = "\"Lois\" <info@onechanhs.ca>", cc: string[] = ["info@onechanhs.ca"], region: string = "us-west-2") => {
   const SES = new AWS.SESV2({ region })
 
   // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SESV2.html#sendEmail-property

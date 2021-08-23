@@ -126,9 +126,15 @@ export const getOrder = /* GraphQL */ `
       }
       discount
       discountCodeUsed
+      shipmentChoice
+      shipmentPrice
       isFulfilled
       fulfilledDate
       dateOrdered
+      isPaymentProcessed
+      paymentPlatform
+      paymentData
+      totalPrice
     }
   }
 `;
