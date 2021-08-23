@@ -4,7 +4,7 @@ import { PromiseResult } from 'aws-sdk/lib/request'
 import { v4 } from 'uuid'
 
 import { QueryOutput, PutItemOutput } from 'aws-sdk/clients/dynamodb'
-import { Order, OrderInput, OrderItem, OrderItemInput, OrderOutputStep1, OrderOutputStep2, ShippingLocations, ShippingOptions } from '../functions/handlers/orders'
+import { OrderInput, OrderItemInput, OrderOutputStep1, OrderOutputStep2, ShippingOptions } from '../functions/handlers/orders'
 import { StoreItem, StoreItemInput } from '../functions/handlers/storeItems'
 
 import Square = require('square')
@@ -19,6 +19,14 @@ function getClients(regions = 'ca-central-1') {
   const regionsArray = regions.split(',')
   const clients = regionsArray.map(region => new AWS.DynamoDB({ region }))
   return clients;
+}
+
+function stringify(obj: any): string {
+  return JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint'
+          ? value.toString()
+          : value // return everything else unchanged
+  )
 }
 
 export const queryStoreItemById = async (table: string = "storeItem", id: string): Promise<QueryOutput> => {
@@ -174,10 +182,14 @@ export const writePayment = async (
   paymentData: Square.CreatePaymentResponse,
   totalPrice: number
 ): Promise<{order: any}|{ error: string }> => {
+  console.log("In writePayment()")
   const dynamodb = new AWS.DynamoDB({region: REGION })
-  const dateOrdered = Date.now()
+  console.log("Initiated AWS.Dynamo")
 
-  let params = {
+  const dateOrdered = Math.floor(new Date().getTime() / 1000.0)
+  console.log(`created date order time: ${dateOrdered}`)
+
+  const params = {
     TableName: table,
     Key: { "orderId": { "S": order.orderId} },
     UpdateExpression: `
@@ -195,11 +207,12 @@ export const writePayment = async (
       ":shipmentPrice":       { N: shipmentPrice.toFixed(2) },
       ":isPaymentProcessed":  { BOOL: true },
       ":paymentPlatform":     { S: paymentPlatform },
-      ":paymentData":         { S: JSON.stringify(paymentData) },
+      ":paymentData":         { S: stringify(paymentData) },
       ":totalPrice":          { N: totalPrice.toFixed(2) },
-      ":dateOrdered":         { N: ""+dateOrdered }
+      ":dateOrdered":         { N: `${dateOrdered}` }
     }
   }
+  console.log(JSON.stringify(params))
 
   const orderStep2 = { 
     ...order, 
@@ -209,15 +222,14 @@ export const writePayment = async (
     totalPrice,
     dateOrdered
   } as OrderOutputStep2
-
+  console.log(`orderStep2: ${JSON.stringify(orderStep2)}`)
   
-  console.log(JSON.stringify(params))
   const result = await dynamodb.updateItem(params).promise()
   if ((result as unknown as AWSError).code) {
     console.error(result)
     return { error: (result as unknown as AWSError).message }
   } else {
-    console.log()
+    console.log({ order: orderStep2 })
     return { order: orderStep2 }
   }
 }

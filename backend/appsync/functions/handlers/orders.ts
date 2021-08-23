@@ -145,8 +145,8 @@ export const createOrder = async (event: { arguments: any }): Promise<OrderOutpu
   // Add DISCOUNTS here if needed
 
   const bodyAmountMoney : Square.Money = {}
-  bodyAmountMoney.amount = BigInt(order.totalPrice)
-  bodyAmountMoney.currency = "CAN"
+  bodyAmountMoney.amount = BigInt( Math.round(order.totalPrice * 100) ) // SQUARE works in cents
+  bodyAmountMoney.currency = "CAD" // ISO 4217
 
   const squarePaymentRequest: Square.CreatePaymentRequest = {
     sourceId: paymentInput.sourceId,
@@ -154,32 +154,19 @@ export const createOrder = async (event: { arguments: any }): Promise<OrderOutpu
     amountMoney: bodyAmountMoney
   }
 
+  let sqResult :Square.ApiResponse<Square.CreatePaymentResponse>
+
   try {
     const client = new Square.Client({
       environment: isProduction ? Square.Environment.Production : Square.Environment.Sandbox,
       accessToken: SQUARE_ACCESS_TOKEN,
     });
 
-    const { result, ...httpResponse } = await client.paymentsApi.createPayment(squarePaymentRequest)
-    const { statusCode, headers } = httpResponse
+    // const { result, ...httpResponse } = await client.paymentsApi.createPayment(squarePaymentRequest)
+    sqResult = await client.paymentsApi.createPayment(squarePaymentRequest)
+    const { statusCode, headers } = sqResult
     console.log(`SQUARE OK - ${statusCode} ${JSON.stringify(headers)}`)
 
-    const result2 = await dynamoService.writePayment(
-        order, orderTable, newOrder.shipmentChoice, 
-        shippingCostMap[`${newOrder.city}, ${newOrder.state}`], 
-        newOrder.paymentPlatform, result, order.totalPrice)
-
-    if ((result2 as any).error) {
-      console.error(`writePayment error: ${JSON.stringify(result2)}`)
-      return result2 as { error: string }
-    }
-
-    // Step 3: send the email
-    const emailResult = await sesService.sendOrderEmail([], order)
-    console.log("Email sent!")
-    console.log(emailResult)
-
-    return (result2 as { order: OrderOutputStep2 }).order
   } catch (error) {
     if (error instanceof Square.ApiError) {
       const { statusCode, headers } = error
@@ -191,4 +178,22 @@ export const createOrder = async (event: { arguments: any }): Promise<OrderOutpu
       return { error: JSON.stringify(error) }
     }
   }
+
+  const result2 = await dynamoService.writePayment(
+    order, orderTable, newOrder.shipmentChoice, 
+    shippingCostMap[`${newOrder.city}, ${newOrder.state}`], 
+    newOrder.paymentPlatform, sqResult.result, order.totalPrice)
+
+  console.log(`writePayment complete: ${JSON.stringify(result2)}`)
+  if ((result2 as any).error) {
+    console.error(`writePayment error: ${JSON.stringify(result2)}`)
+    return result2 as { error: string }
+  }
+
+  // Step 3: send the email
+  const emailResult = await sesService.sendOrderEmail([], (result2 as { order: OrderOutputStep2 }).order)
+  console.log("Email sent!")
+  console.log(emailResult)
+
+  return (result2 as { order: OrderOutputStep2 }).order
 }

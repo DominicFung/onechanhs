@@ -35,8 +35,10 @@ type OrderOutput @aws_iam @aws_cognito_user_pools {
   orderId: ID!
   email: AWSEmail!
 
+  shipmentPrice: Float
   orderItems: [OrderItemOutput]
   totalPrice: Float!
+  dateOrdered: Int
 }
 
 type OrderItemOutput @aws_iam @aws_cognito_user_pools {

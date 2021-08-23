@@ -53,6 +53,7 @@ export const createOrder = /* GraphQL */ `
     createOrder(newOrder: $newOrder) {
       orderId
       email
+      shipmentPrice
       orderItems {
         itemId
         purchasePrice
@@ -63,6 +64,7 @@ export const createOrder = /* GraphQL */ `
         additionalInstructions
       }
       totalPrice
+      dateOrdered
     }
   }
 `;

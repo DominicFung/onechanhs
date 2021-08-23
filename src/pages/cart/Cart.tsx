@@ -54,7 +54,9 @@ export default function Cart (props: CartProps) {
   const [ highlightErrorLocation, setHightlightErrorLocation ] = React.useState<string[]>([])
   const [ errorMessage, setErrorMessage ] = React.useState("")
 
-  const [invoice, setInvoice] = React.useState<OrderOutput|null>(null)
+  const [ isCheckout, setCheckout ] = React.useState(false)
+  const [ invoice, setInvoice ] = React.useState<OrderOutput|null>(null)
+
   /*
   {
     "orderId": "5854dbde-f013-48da-9974-bf4c89b83e2f",
@@ -145,7 +147,8 @@ export default function Cart (props: CartProps) {
 
   const submitOrder =  async (
     items: OrderItem[], email: string,
-    address: string, cityState: string, country: string, postal: string
+    address: string, cityState: string, country: string, postal: string,
+    shipmentChoice: string, paymentPlatform: string, paymentData: string
   ) => {
     setHightlightErrorLocation([""])
     setErrorMessage("")
@@ -210,7 +213,8 @@ export default function Cart (props: CartProps) {
           newOrder: {
             items: tempItems, email,
             address, city, state, country, 
-            postalCode: postal
+            postalCode: postal,
+            shipmentChoice, paymentPlatform, paymentData
           } as OrderInput
         },
         authMode: GRAPHQL_AUTH_MODE.AWS_IAM
@@ -228,9 +232,14 @@ export default function Cart (props: CartProps) {
 
   return (
     <div className="w-full p-4 pt-32 flex justify-center pb-24">
-
-      {/* invoice ? <Invoice invoice={invoice! as OrderOutput} address={`${address} ${citystate} ${country}. ${postal}`} /> : 
-        <div className="container mx-xl mt-10">
+      { invoice ? <Invoice invoice={invoice! as OrderOutput} address={`${address} ${citystate} ${country}. ${postal}`} /> : 
+        ( isCheckout ? <Payment page={props.page} email={email} totalPrice={totalPrice}
+          submitOrder={( paymentPlatform, paymentData ) => { 
+            submitOrder(
+              originalItems, email, address, citystate, country, postal, 
+              shippingOption, paymentPlatform, paymentData
+            ) 
+          }}/> : <div className="container mx-xl mt-10">
           <div className="grid grid-cols-6 space-x-8">
 
           <div className="flex shadow-md my-2 flex-col col-span-6 lg:col-span-4">
@@ -369,16 +378,14 @@ export default function Cart (props: CartProps) {
                   <span>${totalPrice.toFixed(2)}</span>
                 </div>
                 <button className="bg-lightsage font-semibold hover:bg-darkgreen py-3 text-sm text-white uppercase w-full"
-                  onClick={() => { submitOrder(originalItems, email, address, citystate, country, postal) }}
+                  onClick={() => { setCheckout(true) }}
                 >Checkout</button>
               </div>
             </div>
 
 
           </div>
-        </div> */}
-
-        <Payment page={props.page} email={email} />
+        </div> )}
     </div>
   )
 }

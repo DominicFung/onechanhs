@@ -60,8 +60,11 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:ListTables
           Resource: 'arn:aws:dynamodb:*:*:*'
-    
-     
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: '*'
 
 # you can define service wide environment variables here
 #  environment:

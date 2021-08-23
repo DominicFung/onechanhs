@@ -13,6 +13,7 @@ export interface InvoiceProps {
 }
 
 const _CAPTURE = "capture"
+const _SHIP_BY_DAYS = 10
 export default function Invoice (props: InvoiceProps) {
 
   // https://tailwindcomponents.com/component/invoice-generator-build-with-tailwindcss-and-alpinejs
@@ -95,7 +96,7 @@ export default function Invoice (props: InvoiceProps) {
             <div className="w-2/4">
               <div className="mb-2 md:mb-1 md:flex items-center">
                 <label className="w-32 text-gray-800 block font-bold text-sm uppercase tracking-wide">Invoice No.</label>
-                <span className="mr-4 inline-block hidden md:block">:</span>
+                <span className="mr-4 inline-block md:block">:</span>
                 <div className="flex-1">
                 <div className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500"
                 >{`INV-${props.invoice.orderId}`}</div>
@@ -104,40 +105,25 @@ export default function Invoice (props: InvoiceProps) {
 
               <div className="mb-2 md:mb-1 md:flex items-center">
                 <label className="w-32 text-gray-800 block font-bold text-sm uppercase tracking-wide">Invoice Date</label>
-                <span className="mr-4 inline-block hidden md:block">:</span>
+                <span className="mr-4 inline-block md:block">:</span>
                 <div className="flex-1">
                 <div className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-52 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500 js-datepicker"
-                >Monday</div>
+                >{props.invoice.dateOrdered ? new Date(props.invoice.dateOrdered * 1000).toLocaleString("en-US", {
+                  weekday: "long", month: "short", day: "numeric", year: "numeric"
+                }) : ""}</div>
                 </div>
               </div>
 
               <div className="mb-2 md:mb-1 md:flex items-center">
-                <label className="w-32 text-gray-800 block font-bold text-sm uppercase tracking-wide">Due date</label>
-                <span className="mr-4 inline-block hidden md:block">:</span>
+                <label className="w-32 text-gray-800 block font-bold text-sm uppercase tracking-wide">Ship by (est.)</label>
+                <span className="mr-4 inline-block md:block">:</span>
                 <div className="flex-1">
                 <div className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-52 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500 js-datepicker-2"
-                >Mar 17, 2020</div>
+                >{props.invoice.dateOrdered ? new Date((props.invoice.dateOrdered + _SHIP_BY_DAYS*86400) * 1000).toLocaleString("en-US", {
+                  weekday: "long", month: "short", day: "numeric", year: "numeric"
+                }) : ""}</div>
                 </div>
               </div>
-            </div>
-            <div>
-              {/* <div className="w-32 h-32 mb-1 border rounded-lg overflow-hidden relative bg-gray-100">
-                <img id="image" className="object-cover w-full h-32" src="https://placehold.co/300x300/e2e8f0/e2e8f0" />
-                
-                <div className="absolute top-0 left-0 right-0 bottom-0 w-full block cursor-pointer flex items-center justify-center">
-                  <button type="button"
-                    style={{backgroundColor: "rgba(255, 255, 255, 0.65)"}}
-                    className="hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 text-sm border border-gray-300 rounded-lg shadow-sm"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-camera" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="0" y="0" width="24" height="24" stroke="none"></rect>
-                      <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
-                      <circle cx="12" cy="13" r="3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <input name="photo" id="fileInput" accept="image/*" className="hidden" type="file" /> */}
             </div>
           </div>
 
@@ -213,7 +199,7 @@ export default function Invoice (props: InvoiceProps) {
 
           { props.invoice.orderItems ? props.invoice.orderItems.map((v, i) => {
               return (
-                <div className="flex -mx-1 py-2 border-b">
+                <div className="flex -mx-1 py-2 border-b" key={i}>
                   <div className="flex-1 px-1">
                     <p className="text-gray-800" x-text="invoice.name">
                       {v?.itemId}
@@ -266,11 +252,19 @@ export default function Invoice (props: InvoiceProps) {
               </div>
             </div>
             <div className="flex justify-between mb-4">
+              <div className="text-sm text-gray-600 text-right flex-1">Shipping:</div>
+              <div className="text-right w-40">
+                <div className="text-sm text-gray-600" x-html="totalGST">
+                  {props.invoice.shipmentPrice}
+                </div>
+              </div>
+            </div>
+            {/* <div className="flex justify-between mb-4">
               <div className="text-sm text-gray-600 text-right flex-1">GST(18%) incl. in Total</div>
               <div className="text-right w-40">
                 <div className="text-sm text-gray-600" x-html="totalGST"></div>
               </div>
-            </div>
+            </div> */}
           
             <div className="py-2 border-t border-b">
               <div className="flex justify-between">

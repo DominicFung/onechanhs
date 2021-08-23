@@ -55,8 +55,10 @@ export type OrderOutput = {
   __typename: "OrderOutput",
   orderId: string,
   email: string,
+  shipmentPrice?: number | null,
   orderItems?:  Array<OrderItemOutput | null > | null,
   totalPrice: number,
+  dateOrdered?: number | null,
 };
 
 export type OrderItemOutput = {
@@ -179,6 +181,7 @@ export type CreateOrderMutation = {
     __typename: "OrderOutput",
     orderId: string,
     email: string,
+    shipmentPrice?: number | null,
     orderItems?:  Array< {
       __typename: "OrderItemOutput",
       itemId: string,
@@ -190,6 +193,7 @@ export type CreateOrderMutation = {
       additionalInstructions?: string | null,
     } | null > | null,
     totalPrice: number,
+    dateOrdered?: number | null,
   },
 };
 
