@@ -153,9 +153,15 @@ export const createOrder = async (event: { arguments: any }): Promise<OrderOutpu
     idempotencyKey: order.orderId,
     amountMoney: bodyAmountMoney
   }
+  squarePaymentRequest.statementDescriptionIdentifier = order.orderId.split("-")[-1]
+  squarePaymentRequest.referenceId = order.orderId
+  squarePaymentRequest.buyerEmailAddress = order.email
+
+  // squarePaymentRequest.billingAddress = {
+  //   addressLine1: "",
+  // }
 
   let sqResult :Square.ApiResponse<Square.CreatePaymentResponse>
-
   try {
     const client = new Square.Client({
       environment: isProduction ? Square.Environment.Production : Square.Environment.Sandbox,

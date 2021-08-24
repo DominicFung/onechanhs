@@ -17,6 +17,7 @@ import { getItems, storeItems } from '../../components/utils/LocalStorage'
 import { setIntersepter } from '../../components/utils/Utils'
 
 const _SIDE_PANNEL_ID = "item_side_pannel"
+const _tailwindLg = 1024
 const defaultBackground = './assets/IMG_1598_jpg_2.jpg'
 
 interface StoreItemProps {
@@ -28,7 +29,8 @@ export default function Item(props: StoreItemProps){
   const { id } = useParams() as any
   const [ storeItem, setStoreItem ] = React.useState<StoreItem|null>(null) //StoreItem
 
-  const [sidePannelHeight, setSidePannelHeight] = React.useState(0)
+  const [ width, setWidth ] = React.useState(500)
+  const [ sidePannelHeight, setSidePannelHeight] = React.useState(0)
   const sidePannelRef = React.useRef(null)
 
   const [ pictureIndex, setPicutreIndex] = React.useState(0)
@@ -157,6 +159,8 @@ export default function Item(props: StoreItemProps){
   }, [pictureIndex])
 
   const handleResize = () => {
+    setWidth(window.innerWidth)
+
     if (sidePannelRef.current) {
       let tempHeight = (sidePannelRef.current as any).clientHeight
       if (tempHeight) setSidePannelHeight(tempHeight)
@@ -218,10 +222,10 @@ export default function Item(props: StoreItemProps){
 
   return (
     <div className="w-full p-4 pt-32 flex justify-center pb-24">
-      <div className="container mx-w-2xl" style={{ height: sidePannelHeight}}>
+      <div className="container mx-w-2xl" style={{ height: width < _tailwindLg ? sidePannelHeight*1.4 : sidePannelHeight}}>
 
         <div className="pt-20 pb-20 grid grid-cols-6 w-full gap-8">
-          <div className="col-span-4">
+          <div className="lg:col-span-4 col-span-6 lg:pl-0 pl-8">
             <div className="grid grid-cols-6 gap-2 h-full">
               <div className="w-full col-span-1">
                 <div className="w-full grid grid-flow-row gap-1 justify-end">
@@ -245,7 +249,7 @@ export default function Item(props: StoreItemProps){
             </div>
           </div>
           
-          <div className="col-span-2 divide-y divide-gray-300" id={_SIDE_PANNEL_ID} ref={sidePannelRef}>
+          <div className="lg:col-span-2 col-span-6 divide-y divide-gray-300" id={_SIDE_PANNEL_ID} ref={sidePannelRef}>
             <div className="">
               <div>
                 <span className="inline-flex items-center justify-center px-2 py-1 mr-2 text-xs font-bold leading-none text-gray-100 bg-gray-300 rounded-full">#cool</span>

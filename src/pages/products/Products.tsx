@@ -37,7 +37,7 @@ export default function Products(props: ProductProps) {
   return (
   <div className="w-full p-4 pt-32 flex justify-center">
     <div className="container mx-lg">
-      <div className="pt-20 pb-20 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-8">
+      <div className="pt-20 pb-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-8">
         {products.map((item, i) => {
           return <StoreItemComponent key={i} id={item.itemId}
                     title={item.title} price={item.price} 

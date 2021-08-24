@@ -14,7 +14,22 @@ function toHTML(order: OrderOutputStep2): string {
   let html: string = "<div>"
 
   for (let key of Object.keys(order)) {
-    html = html.concat(`<span><b>${key}:</b> ${stringify(order[key])}</span><br />`)
+    if (key == "orderItems") {
+      html = html.concat(`<div style="margin-top: 10px;"><h3>Order Items (${order.orderItems.length}):</h5>`)
+      html = html.concat("<div> -------------------------------</div><br />")
+      
+      const ois = order.orderItems
+      for (let k of Object.keys(ois)) {
+        for (let l of Object.keys(ois[k])) {
+          html = html.concat(`<span style="margin-left: 10px;"><b>${l}:</b>${ois[k][l]}</span><br />`)
+        }
+        html = html.concat("<div> -------------------------------</div><br />")
+      }
+
+      html = html.concat("</div>")
+    } else {
+      html = html.concat(`<span><b>${key}:</b> ${stringify(order[key])}</span><br />`)
+    }
   }
 
   html = html.concat("</div>")
